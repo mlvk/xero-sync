@@ -9,6 +9,8 @@
    [mount.core :as mount]
    [xero-syncer.core :refer [start-app]]
    [xero-syncer.db.core :as db]
+   [xero-syncer.services.rabbit-mq]
+   [xero-syncer.services.syncer]
    [conman.core :as conman]
    [luminus-migrations.core :as migrations]))
 
@@ -39,28 +41,44 @@
   (mount/stop #'xero-syncer.db.core/*db*)
   (mount/start #'xero-syncer.db.core/*db*)
   (binding [*ns* (the-ns 'xero-syncer.db.core)]
-    (xero-syncer.db.core/bind-sql-files)
-    #_(conman/bind-connection xero-syncer.db.core/*db* "sql/queries.sql")))
+    (xero-syncer.db.core/bind-sql-files)))
 
-(defn reset-db
-  "Resets database."
+(defn restart-rabbit-mq
+  "Restarts rabbitmq connections"
   []
-  (migrations/migrate ["reset"] (select-keys env [:database-url])))
+  (mount/stop #'xero-syncer.services.rabbit-mq/chan)
+  (mount/stop #'xero-syncer.services.rabbit-mq/conn)
 
-(defn migrate
-  "Migrates database up for all outstanding migrations."
+  (mount/start #'xero-syncer.services.rabbit-mq/conn)
+  (mount/start #'xero-syncer.services.rabbit-mq/chan))
+
+(defn stop-rabbit-mq
+  "Restarts rabbitmq connections"
   []
-  (migrations/migrate ["migrate"] (select-keys env [:database-url])))
+  (mount/stop #'xero-syncer.services.rabbit-mq/chan)
+  (mount/stop #'xero-syncer.services.rabbit-mq/conn))
 
-(defn rollback
-  "Rollback latest database migration."
+(defn start-rabbit-mq
+  "Restarts rabbitmq connections"
   []
-  (migrations/migrate ["rollback"] (select-keys env [:database-url])))
+  (mount/start #'xero-syncer.services.rabbit-mq/conn)
+  (mount/start #'xero-syncer.services.rabbit-mq/chan))
 
-(defn create-migration
-  "Create a new up and down migration file with a generated timestamp and `name`."
-  [name]
-  (migrations/create name (select-keys env [:database-url])))
+(defn restart-schedules
+  "Restarts rabbitmq connections"
+  []
+  (mount/stop #'xero-syncer.services.syncer/schedules)
+  (mount/start #'xero-syncer.services.syncer/schedules))
+
+(defn stop-schedules
+  "Restarts rabbitmq connections"
+  []
+  (mount/stop #'xero-syncer.services.syncer/schedules))
+
+(defn start-schedules
+  "Restarts rabbitmq connections"
+  []
+  (mount/start #'xero-syncer.services.syncer/schedules))
 
 (defn reset-pm
   []

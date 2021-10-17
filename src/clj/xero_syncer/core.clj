@@ -1,22 +1,26 @@
 (ns xero-syncer.core
   (:require
-    [xero-syncer.handler :as handler]
-    [xero-syncer.nrepl :as nrepl]
-    [luminus.http-server :as http]
-    [luminus-migrations.core :as migrations]
-    [xero-syncer.config :refer [env]]
-    [clojure.tools.cli :refer [parse-opts]]
-    [clojure.tools.logging :as log]
-    [mount.core :as mount])
+   [xero-syncer.handler :as handler]
+   [xero-syncer.nrepl :as nrepl]
+   [luminus.http-server :as http]
+   [luminus-migrations.core :as migrations]
+   [xero-syncer.config :refer [env]]
+   [clojure.tools.cli :refer [parse-opts]]
+   [clojure.tools.logging :as log]
+   [xero-syncer.services.xero]
+   [xero-syncer.services.rabbit-mq]
+   [xero-syncer.services.syncer]
+   [xero-syncer.services.scheduler]
+   [mount.core :as mount])
   (:gen-class))
 
 ;; log uncaught exceptions in threads
 (Thread/setDefaultUncaughtExceptionHandler
-  (reify Thread$UncaughtExceptionHandler
-    (uncaughtException [_ thread ex]
-      (log/error {:what :uncaught-exception
-                  :exception ex
-                  :where (str "Uncaught exception on" (.getName thread))}))))
+ (reify Thread$UncaughtExceptionHandler
+   (uncaughtException [_ thread ex]
+     (log/error {:what :uncaught-exception
+                 :exception ex
+                 :where (str "Uncaught exception on" (.getName thread))}))))
 
 (def cli-options
   [["-p" "--port PORT" "Port number"
@@ -25,10 +29,10 @@
 (mount/defstate ^{:on-reload :noop} http-server
   :start
   (http/start
-    (-> env
-        (assoc  :handler (handler/app))
-        (update :port #(or (-> env :options :port) %))
-        (select-keys [:handler :host :port])))
+   (-> env
+       (assoc  :handler (handler/app))
+       (update :port #(or (-> env :options :port) %))
+       (select-keys [:handler :host :port])))
   :stop
   (http/stop http-server))
 
@@ -57,21 +61,13 @@
 
 (defn -main [& args]
   (-> args
-                            (parse-opts cli-options)
-                            (mount/start-with-args #'xero-syncer.config/env))
+      (parse-opts cli-options)
+      (mount/start-with-args #'xero-syncer.config/env))
   (cond
     (nil? (:database-url env))
     (do
       (log/error "Database configuration not found, :database-url environment variable must be set before running")
       (System/exit 1))
-    (some #{"init"} args)
-    (do
-      (migrations/init (select-keys env [:database-url :init-script]))
-      (System/exit 0))
-    (migrations/migration? args)
-    (do
-      (migrations/migrate args (select-keys env [:database-url]))
-      (System/exit 0))
     :else
     (start-app args)))
-  
+

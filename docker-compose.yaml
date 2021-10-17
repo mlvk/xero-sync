@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+  db:
+    image: postgres
+    ports:
+      - 5432:5432
+
+    volumes:
+      - ./tmp/db/pg/db/postgresql/data:/var/lib/postgresql/data
+      - ./tmp/db/pg/db/dumps:/var/lib/dumps
+    environment:
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: postgres

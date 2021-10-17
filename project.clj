@@ -25,6 +25,9 @@
                  [org.clojure/data.codec "0.1.1"]
                  [nrepl "0.8.3"]
 
+                 [com.novemberain/langohr "5.1.0"]
+                 [com.taoensso/nippy "3.1.1"]
+
                  [cheshire "5.10.0"]
                  [crouton "0.1.2"]
                  [org.clojure/tools.reader "1.3.6"]
@@ -36,6 +39,8 @@
                  [org.webjars.npm/bulma "0.9.2"]
                  [org.webjars.npm/material-icons "1.0.0"]
                  [org.webjars/webjars-locator "0.41"]
+                 [jarohen/chime "0.3.3"]
+                 [nano-id "1.0.0"]
                  [ring-webjars "0.2.0"]
                  [ring/ring-core "1.9.4"]
                  [ring/ring-defaults "0.3.3"]
@@ -60,6 +65,9 @@
 
    :dev           [:project/dev :profiles/dev]
    :test          [:project/dev :project/test :profiles/test]
+
+   :reveal {:dependencies [[vlaaad/reveal "1.3.224"]]
+            :repl-options {:nrepl-middleware [vlaaad.reveal.nrepl/middleware]}}
 
    :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"]
                   :dependencies [[org.clojure/tools.namespace "1.1.0"]

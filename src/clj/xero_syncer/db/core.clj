@@ -10,6 +10,22 @@
    [mount.core :refer [defstate]])
   (:import (org.postgresql.util PGobject)))
 
+
+(declare
+ get-items
+ get-item-by-id
+ get-item-by-xero-id
+ get-item-by-code
+
+ get-unsynced-items
+ get-synced-items
+
+ get-sell-items
+ get-purchase-items
+
+ mark-item-synced!
+ mark-item-unsynced!)
+
 (defstate ^:dynamic *db*
   :start (if-let [jdbc-url (env :database-url)]
            (conman/connect! {:jdbc-url jdbc-url})
@@ -24,8 +40,8 @@
    *db*
    "sql/queries.sql"
    "sql/items.sql"
-   "sql/item_prices.psql"
-   "sql/orders.psql"))
+   "sql/item_prices.sql"
+   "sql/orders.sql"))
 
 (bind-sql-files)
 

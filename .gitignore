@@ -15,9 +15,10 @@ profiles.clj
 /node_modules
 /log
 
-.calva
-archive
-.lsp
-.clj-kondo
+/.calva
+/archive
+/.lsp
+/.clj-kondo
 
 .DS_Store
+/tmp

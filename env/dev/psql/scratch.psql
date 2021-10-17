@@ -1,5 +1,12 @@
 SELECT
     *
 FROM
+    items i
+WHERE
+    i.xero_id = '350bb4b1-81c6-4130-80d5-91d9b76cb755';
+
+SELECT
+    *
+FROM
     items;
 

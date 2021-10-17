@@ -1,37 +1,57 @@
 (ns xero-syncer.services.syncer
-  (:require [xero-syncer.services.xero :as xero]
-            [xero-syncer.db.core :as db]))
+  (:require [mount.core :as mount]
+            [tick.core :as t]
+            [xero-syncer.services.rabbit-mq :as mq]
+            [xero-syncer.services.scheduler :as scheduler]
+            [xero-syncer.syncers.item :as item-syncer]))
 
-(defn sync-items
+(declare create-subscriptions! create-schedules!)
+
+(mount/defstate ^{:on-reload :noop} subscriptions
+  :start (create-subscriptions!)
+  :stop (mq/unsubscribe-tags! :tags subscriptions))
+
+(mount/defstate ^{:on-reload :noop} schedules
+  :start (create-schedules!)
+  :stop (scheduler/stop-all-schedules))
+
+(defn local->remote-sync-handler
+  "Handler for the local->remote-sync queue"
+  [_ _ payload]
+  (case (:type payload)
+    :item (item-syncer/local->remote payload)))
+
+(defn remote->local-sync-handler
+  "Handler for the remote->local-sync queue"
+  [_ _ payload]
+  (case (:type payload)
+    :item (item-syncer/remote->local payload)))
+
+(defn create-subscriptions!
+  "Create all rabbit mq subscriptions. Subscribe to new messages on a queue"
   []
-  (let [remote-items (xero/get-items)
-        local-items (db/get-items)]
+  [(mq/subscribe mq/local->remote-queue #'local->remote-sync-handler)
+   (mq/subscribe mq/remote->local-queue #'remote->local-sync-handler)])
 
-    {:remote-items remote-items
-     :local-items local-items}))
-
-
-
-
-
-#_(-> (first (db/get-synced-items))
-      :id)
-
-#_(db/mark-unsynced! {:id 143})
-
-
-#_(db/mark-synced! {:id 143})
-
-(defn yoson
+(defn create-schedules!
+  "Create all schedules. Functions to be called on a schedule"
   []
-  (let [local-item (first (db/get-unsynced-items))
-        remote-item (or (xero/find-item-by-xero-id (:xero_id local-item))
-                        (xero/find-item-by-code (:xero_id local-item)))
-        has-remote? (boolean remote-item)]
+  [(scheduler/create-schedule
+    :handler #'item-syncer/check-unsynced-local-items
+    :frequency (t/new-duration 10 :seconds))])
 
-    (if has-remote?
-      (xero/sync-local<-remote! {:local local-item
-                                 :remote remote-item})
-      (xero/sync-local->remote! local-item))))
+(comment
 
-#_(yoson)
+  (create-subscriptions!)
+
+  (mq/unsubscribe-tags!)
+
+  (mq/publish :topic "sync.local.item" :payload {:type :item
+                                                 :name "carrots"})
+  (mq/publish :topic "sync.remote.item" :payload {:type :item
+                                                  :name "carrots xero"})
+
+;;   
+  )
+
+

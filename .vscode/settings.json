@@ -25,6 +25,48 @@
       "snippet": "(restart-db)"
     },
     {
+      "name": "Restart RabbitMQ Connection",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(restart-rabbit-mq)"
+    },
+
+    {
+      "name": "Stop RabbitMQ",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(stop-rabbit-mq)"
+    },
+
+    {
+      "name": "Start RabbitMQ",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(start-rabbit-mq)"
+    },
+
+    {
+      "name": "Restart Schedules",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(restart-schedules)"
+    },
+
+    {
+      "name": "Stop Schedules",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(stop-schedules)"
+    },
+
+    {
+      "name": "Start Schedules",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(start-schedules)"
+    },
+
+    {
       "name": "Reset PM",
       "ns": "user",
       "repl": "clj",
@@ -33,12 +75,12 @@
   ],
   "calva.replConnectSequences": [
     {
-      "name": "xero-syncer Server",
+      "name": "Xero Syncer + Reveal",
       "projectType": "Leiningen",
       "afterCLJReplJackInCode": "(in-ns 'user) (start) (println \"Access the server at http://localhost:3000\")",
       "cljsType": "none",
       "menuSelections": {
-        "leinProfiles": ["dev"]
+        "leinProfiles": ["dev", "reveal"]
       }
     }
   ]
