@@ -118,3 +118,8 @@
 
 ;;   
   )
+
+#_(rmq/connect {:uri "amqps://guest:guest@localhost:5672"})
+
+#_(:cloudamqp-url env)
+;; => "amqps://guest:guest@localhost:5672/"

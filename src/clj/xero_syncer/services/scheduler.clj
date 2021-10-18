@@ -33,6 +33,7 @@
    
    Required keys: 
    
+   :name - Name for this schedule
    :handler - Handler fn to be called at the schedule
    :frequency - Duration between calls
 
@@ -48,15 +49,16 @@
      :start-at (time-from-now (t/new-duration 5 :seconds)))
 
    "
-  [& {:keys [handler frequency start-at]
+  [& {:keys [name handler frequency start-at]
       :or {start-at (t/now)}}]
   (let [schedule-id (nano-id)
         schedule (chime/chime-at
                   (chime/periodic-seq
                    start-at
                    frequency)
-                  handler)]
+                  (fn [_] (handler)))]
     (swap! schedules conj {:id schedule-id
+                           :name name
                            :frequency frequency
                            :started-at start-at
                            :closeable schedule})))
@@ -92,6 +94,8 @@
 
   (stop-all-schedules)
   (stop-schedule "lp5__ebnbiTLWGzXS2pb6")
+
+  (tap> @schedules)
 
 ;;   
   )

@@ -8,7 +8,7 @@
 
 (defn generate-auth-headers
   []
-  {:authorization (xero/generate-bearer-token)
+  {:authorization (xero/generate-bearer-auth-header)
    :Xero-Tenant-Id (-> env :xero :tenant-id)})
 
 (defn find-item-by-xero-id

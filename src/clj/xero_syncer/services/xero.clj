@@ -4,102 +4,128 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [cheshire.core :refer [generate-string parse-string]]
             [ring.util.http-response :refer :all]
+            [clojure.tools.logging :as log]
             [postmortem.core :as pm]
             [tick.core :as t]
             [xero-syncer.config :refer [env]])
   (:import java.util.Base64))
 
+(defonce ^:private access-data (atom nil))
 (def xero-token-endpoint "https://identity.xero.com/connect/token")
-
-(defn encodeB64 [to-encode]
-  (.encodeToString (Base64/getEncoder) (.getBytes to-encode)))
-
-(defonce auth-token (atom nil))
-
-(defn- reset-auth-token!
-  [token]
-  (reset! auth-token (with-meta token {:created (t/now)})))
-
 (def grant-type-lookup-table
   {:authorization-code "authorization_code"
    :refresh "refresh_token"})
 
-(defn- generate-auth-header
+(defn- encodeB64 [to-encode]
+  (.encodeToString (Base64/getEncoder) (.getBytes to-encode)))
+
+(defn- persist-access-data!
+  "Persist the provided auth token to local state"
+  [data]
+  (reset! access-data (with-meta data {:created (t/now)})))
+
+(defn- generate-basic-auth-header
+  "Generate the auth header per this spec https://developer.xero.com/documentation/guides/oauth2/auth-flow/#3-exchange-the-code
+   Returns - 'Basic client-id:client-secret'"
   []
-  (str
-   "Basic "
-   (encodeB64
-    (str
-     (-> env :xero :client-id)
-     ":"
-     (-> env :xero :client-secret)))))
+  (let [client-id (-> env :xero :client-id)
+        client-secret (-> env :xero :client-secret)
+        key (str client-id ":" client-secret)
+        encoded-key (encodeB64 key)]
+    (str "Basic " encoded-key)))
 
-(defn- refresh-token-request!
-  [refresh-token]
-  (-> (client/post xero-token-endpoint {:headers {:authorization (generate-auth-header)}
-                                        :form-params {:grant_type (:refresh grant-type-lookup-table)
-                                                      :refresh_token refresh-token}
-                                        :as :auto
-                                        :accept :json})
-      :body))
+(defn has-access-data?
+  []
+  (boolean (:access_token @access-data)))
 
-(defn refresh-token!
-  [refresh-token]
-  (reset-auth-token! (refresh-token-request! refresh-token)))
+(defn refresh-token
+  []
+  (:refresh_token @access-data))
 
-(defn token-time-remaining
+(defn has-refresh-token?
+  []
+  (boolean (refresh-token)))
+
+(defn refresh-access-data!
+  "Refresh access data"
+  []
+  (if (has-refresh-token?)
+    (let [res (-> (client/post
+                   xero-token-endpoint
+                   {:headers {:authorization (generate-basic-auth-header)}
+                    :form-params {:grant_type (:refresh grant-type-lookup-table)
+                                  :refresh_token (refresh-token)}
+                    :as :auto
+                    :accept :json})
+                  :body)]
+      (persist-access-data! res)
+      (log/info {:what "Access token refresh"
+                 :msg "Access token was refreshed successfully"}))
+    (log/warn {:what "Missing access-data"
+               :msg "No access data found. User must first log in through xero."})))
+
+(defn access-token-time-remaining
+  "What is the remaining time in seconds for the provided access token"
   [token]
-  (let [created (:created (meta token))
-        valid-seconds (:expires_in token)
-        expires-at (t/>> (-> created
-                             (t/in "America/Los_Angeles"))
-                         (t/new-duration valid-seconds :seconds))
-        duration (t/duration
-                  {:tick/beginning (t/now)
-                   :tick/end expires-at})]
-    (t/seconds duration)))
+  (if token
+    (let [created (:created (meta token))
+          valid-seconds (:expires_in token)
+          expires-at (t/>> (-> created
+                               (t/in "America/Los_Angeles"))
+                           (t/new-duration valid-seconds :seconds))
+          duration (t/duration
+                    {:tick/beginning (t/now)
+                     :tick/end expires-at})]
+      (t/seconds duration))
+    0))
 
-(defn access-token!
+(defn get-access-token!
+  "Returns a valid access-token or nil if expired and missing refresh token.
+
+   This will force a refresh-token call if expired.
+   It blocks until the new token arrives."
   []
-  (let [refresh-token (:refresh_token @auth-token)
-        time-remaining (token-time-remaining @auth-token)
+  (if (has-access-data?)
+    (let [refresh-token (refresh-token)
+          time-remaining (access-token-time-remaining @access-data)
 
-        expired? (< time-remaining 5)
+          expired? (< time-remaining 5)
 
-        has-refresh-token? (boolean refresh-token)]
+          has-refresh-token? (boolean refresh-token)]
 
-    (when (and expired?
-               has-refresh-token?)
-      (refresh-token! refresh-token)))
+      (if expired?
+        (if has-refresh-token?
 
-  (:access_token @auth-token))
+          (do
+            (refresh-access-data!)
+            (:access_token @access-data))
 
-(defn generate-bearer-token
-  []
-  (str
-   "Bearer "
-   (access-token!)))
+          nil)
 
-(defn- xero-code->auth-token-request!
+        (:access_token @access-data)))
+    nil))
+
+(defn generate-bearer-auth-header [] (str "Bearer " (get-access-token!)))
+
+(defn xero-code->access-data!
+  "Converts a code to a token per: https://developer.xero.com/documentation/guides/oauth2/auth-flow/#3-exchange-the-code"
   [code]
-  (-> (client/post
-       xero-token-endpoint
-       {:headers {:authorization (generate-auth-header)}
-        :form-params {:grant_type (:authorization-code grant-type-lookup-table)
-                      :code code
-                      :redirect_uri (-> env :xero :oauth-callback-uri)}
-        :as :auto
-        :accept :json})
-      :body))
+  (let [res (-> (client/post
+                 xero-token-endpoint
+                 {:headers {:authorization (generate-basic-auth-header)}
+                  :form-params {:grant_type (:authorization-code grant-type-lookup-table)
+                                :code code
+                                :redirect_uri (-> env :xero :oauth-callback-uri)}
+                  :as :auto
+                  :accept :json})
+                :body)]
 
-(defn xero-code->auth-token!
-  [code]
-  (reset-auth-token! (xero-code->auth-token-request! code)))
+    (persist-access-data! res)))
 
 (defn get-items
   []
   (-> (client/get "https://api.xero.com/api.xro/2.0/Items"
-                  {:headers {:authorization (generate-bearer-token)
+                  {:headers {:authorization (generate-bearer-auth-header)
                              :Xero-Tenant-Id (-> env :xero :tenant-id)}
                    :accept :json})
       :body
@@ -111,10 +137,13 @@
 
   (pprint (get-items))
 
-  (refresh-token! (:refresh_token @auth-token))
+  (refresh-access-data!)
 
-  (token-time-remaining @auth-token)
+  (access-token-time-remaining @access-data)
 
+  (refresh-access-data!)
+
+  (tap> @access-data)
   ;; 
   )
 

@@ -25,24 +25,45 @@
       "snippet": "(restart-db)"
     },
     {
-      "name": "Restart RabbitMQ Connection",
+      "name": "Reload RabbitMQ connections and channels",
       "ns": "user",
       "repl": "clj",
       "snippet": "(restart-rabbit-mq)"
     },
 
     {
-      "name": "Stop RabbitMQ",
+      "name": "Stop RabbitMQ connections and channels",
       "ns": "user",
       "repl": "clj",
       "snippet": "(stop-rabbit-mq)"
     },
 
     {
-      "name": "Start RabbitMQ",
+      "name": "Start RabbitMQ connections and channels",
       "ns": "user",
       "repl": "clj",
       "snippet": "(start-rabbit-mq)"
+    },
+
+    {
+      "name": "Restart RabbitMQ subscriptions",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(restart-rabbit-mq-subscriptions)"
+    },
+
+    {
+      "name": "Stop RabbitMQ subscriptions",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(stop-rabbit-mq-subscriptions)"
+    },
+
+    {
+      "name": "Start RabbitMQ subscriptions",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(start-rabbit-mq-subscriptions)"
     },
 
     {

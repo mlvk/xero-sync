@@ -60,6 +60,22 @@
   (mount/start #'xero-syncer.services.rabbit-mq/conn)
   (mount/start #'xero-syncer.services.rabbit-mq/chan))
 
+(defn start-rabbit-mq-subscriptions
+  "Start rabbitmq subscriptions"
+  []
+  (mount/start #'xero-syncer.services.syncer/subscriptions))
+
+(defn stop-rabbit-mq-subscriptions
+  "Stops rabbitmq subscriptions"
+  []
+  (mount/stop #'xero-syncer.services.syncer/subscriptions))
+
+(defn restart-rabbit-mq-subscriptions
+  "Restarts rabbitmq subscriptions"
+  []
+  (mount/stop #'xero-syncer.services.syncer/subscriptions)
+  (mount/start #'xero-syncer.services.syncer/subscriptions))
+
 (defn restart-schedules
   "Restarts rabbitmq connections"
   []

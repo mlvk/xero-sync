@@ -50,7 +50,7 @@
     (lim/mark-item-synced! (:id data))))
 
 (defn check-unsynced-local-items
-  [_]
+  []
   (let [next-item (first (lim/get-unsynced-items))]
     (when next-item
       (mq/publish :topic topics/sync-local-item :payload {:type :item

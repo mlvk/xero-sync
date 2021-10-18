@@ -3,6 +3,7 @@
             [tick.core :as t]
             [xero-syncer.services.rabbit-mq :as mq]
             [xero-syncer.services.scheduler :as scheduler]
+            [xero-syncer.services.xero :as xero]
             [xero-syncer.syncers.item :as item-syncer]))
 
 (declare create-subscriptions! create-schedules!)
@@ -37,8 +38,16 @@
   "Create all schedules. Functions to be called on a schedule"
   []
   [(scheduler/create-schedule
+    :name "Check for unsynced local items"
     :handler #'item-syncer/check-unsynced-local-items
-    :frequency (t/new-duration 10 :seconds))])
+    :frequency (t/new-duration 10 :seconds))
+
+   (scheduler/create-schedule
+    :name "Refresh access data"
+    :handler #'xero/refresh-access-data!
+    :frequency (t/new-duration 15 :minutes))])
+
+subscriptions
 
 (comment
 
