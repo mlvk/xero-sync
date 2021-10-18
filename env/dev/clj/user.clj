@@ -1,15 +1,15 @@
 (ns user
   "Userspace functions you can run by default in your local REPL."
-  (:require [clojure.spec.alpha :as s]
-            [expound.alpha :as expound]
-            [mount.core :as mount]
-            [xero-syncer.core]
-            [clojure.pprint :refer [pprint]]
-            [postmortem.core :as pm]
-            [xero-syncer.db.core :as db]
-            [xero-syncer.services.rabbit-mq]
+  (:require [clojure.pprint :refer [pprint]]
+            [clojure.spec.alpha :as s]
             [cprop.core :refer [load-config]]
             [cprop.tools :as t]
+            [expound.alpha :as expound]
+            [mount.core :as mount]
+            [postmortem.core :as pm]
+            [xero-syncer.core]
+            [xero-syncer.db.core :as db]
+            [xero-syncer.services.rabbit-mq]
             [xero-syncer.services.syncer]))
 
 (alter-var-root #'s/*explain-out* (constantly expound/printer))
