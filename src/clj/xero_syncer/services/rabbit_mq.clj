@@ -1,16 +1,20 @@
 (ns xero-syncer.services.rabbit-mq
-  (:require [clojure.edn]
-            [langohr.basic     :as lb]
-            [langohr.channel   :as lch]
-            [langohr.consumers :as lc]
-            [langohr.core      :as rmq]
-            [langohr.exchange :as le]
-            [langohr.queue     :as lq]
-            [mount.core :as mount]
-            [postmortem.core :as pm]
-            [slingshot.slingshot :refer [try+]]
-            [time-literals.read-write]
-            [xero-syncer.config :refer [env]]))
+  (:require
+   [xero-syncer.config :refer [env]]
+   [clojure.edn]
+   [mount.core :as mount]
+   [slingshot.slingshot :refer [throw+ try+]]
+   [time-literals.read-write]
+   [taoensso.nippy :as nippy]
+   [tick.core :as t]
+   [postmortem.core :as pm]
+   [langohr.core      :as rmq]
+   [langohr.channel   :as lch]
+   [langohr.queue     :as lq]
+   [xero-syncer.db.core :as db]
+   [langohr.consumers :as lc]
+   [langohr.exchange :as le]
+   [langohr.basic     :as lb]))
 
 (def main-exchange "main-exchange")
 (def local->remote-queue "local->remote")
@@ -20,7 +24,7 @@
 (declare start)
 
 (mount/defstate ^{:on-reload :noop} conn
-  :start (rmq/connect (:rabbit-mq env))
+  :start (rmq/connect {:uri (:cloudamqp-url env)})
   :stop (rmq/close conn))
 
 (mount/defstate ^{:on-reload :noop} chan
@@ -119,5 +123,3 @@
 
 ;;   
   )
-
-

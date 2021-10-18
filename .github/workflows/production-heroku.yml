@@ -1,0 +1,25 @@
+name: Production Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  heroku_deploy:
+    name: Push to heroku production environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout src
+        uses: actions/checkout@v2
+        with:
+          ref: main
+
+      - name: Deploy to Heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: ${{secrets.HEROKU_PRODUCTION_APP_NAME}}
+          heroku_email: ${{secrets.HEROKU_EMAIL_ADDRESS}}
+          team: whatisfood
+          branch: main

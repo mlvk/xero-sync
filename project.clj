@@ -25,6 +25,10 @@
                  [org.clojure/data.codec "0.1.1"]
                  [nrepl "0.8.3"]
 
+                 [com.github.seancorfield/honeysql "2.1.818"]
+                 [hikari-cp "2.13.0"]
+                 [com.github.seancorfield/next.jdbc "1.2.737"]
+
                  [com.novemberain/langohr "5.1.0"]
                  [com.taoensso/nippy "3.1.1"]
 

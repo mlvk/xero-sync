@@ -1,38 +1,15 @@
 (ns xero-syncer.db.core-test
-  (:require
-   [xero-syncer.db.core :refer [*db*] :as db]
-   [java-time.pre-java8]
-   [luminus-migrations.core :as migrations]
-   [clojure.test :refer :all]
-   [next.jdbc :as jdbc]
-   [xero-syncer.config :refer [env]]
-   [mount.core :as mount]))
+  (:require [clojure.test :refer :all]
+            [java-time.pre-java8]
+            [mount.core :as mount]
+            [xero-syncer.config :refer [env]]
+            [xero-syncer.db.core :as db]))
 
 (use-fixtures
   :once
   (fn [f]
     (mount/start
      #'xero-syncer.config/env
-     #'xero-syncer.db.core/*db*)
-    (migrations/migrate ["migrate"] (select-keys env [:database-url]))
-    (f)))
+     #'xero-syncer.db.core/conn)
 
-(deftest test-users
-  (jdbc/with-transaction [t-conn *db* {:rollback-only true}]
-    (is (= 1 (db/create-user!
-              t-conn
-              {:id         "1"
-               :first_name "Sam"
-               :last_name  "Smith"
-               :email      "sam.smith@example.com"
-               :pass       "pass"}
-              {})))
-    (is (= {:id         "1"
-            :first_name "Sam"
-            :last_name  "Smith"
-            :email      "sam.smith@example.com"
-            :pass       "pass"
-            :admin      nil
-            :last_login nil
-            :is_active  nil}
-           (db/get-user t-conn {:id "1"} {})))))
+    (f)))

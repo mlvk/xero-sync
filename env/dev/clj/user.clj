@@ -1,18 +1,16 @@
 (ns user
   "Userspace functions you can run by default in your local REPL."
-  (:require
-   [xero-syncer.config :refer [env]]
-   [clojure.pprint]
-   [clojure.spec.alpha :as s]
-   [expound.alpha :as expound]
-   [postmortem.core :as pm]
-   [mount.core :as mount]
-   [xero-syncer.core :refer [start-app]]
-   [xero-syncer.db.core :as db]
-   [xero-syncer.services.rabbit-mq]
-   [xero-syncer.services.syncer]
-   [conman.core :as conman]
-   [luminus-migrations.core :as migrations]))
+  (:require [clojure.spec.alpha :as s]
+            [expound.alpha :as expound]
+            [mount.core :as mount]
+            [xero-syncer.core]
+            [clojure.pprint :refer [pprint]]
+            [postmortem.core :as pm]
+            [xero-syncer.db.core :as db]
+            [xero-syncer.services.rabbit-mq]
+            [cprop.core :refer [load-config]]
+            [cprop.tools :as t]
+            [xero-syncer.services.syncer]))
 
 (alter-var-root #'s/*explain-out* (constantly expound/printer))
 
@@ -38,10 +36,8 @@
 (defn restart-db
   "Restarts database."
   []
-  (mount/stop #'xero-syncer.db.core/*db*)
-  (mount/start #'xero-syncer.db.core/*db*)
-  (binding [*ns* (the-ns 'xero-syncer.db.core)]
-    (xero-syncer.db.core/bind-sql-files)))
+  (mount/stop #'xero-syncer.db.core/conn)
+  (mount/start #'xero-syncer.db.core/conn))
 
 (defn restart-rabbit-mq
   "Restarts rabbitmq connections"
@@ -84,3 +80,7 @@
   []
   (pm/reset!))
 
+(defn print-env-vars
+  []
+  (print (slurp (t/map->env-file
+                 (load-config)))))

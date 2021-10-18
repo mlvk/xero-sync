@@ -71,6 +71,13 @@
       "ns": "user",
       "repl": "clj",
       "snippet": "(reset-pm)"
+    },
+
+    {
+      "name": "Print env vars",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(print-env-vars)"
     }
   ],
   "calva.replConnectSequences": [
