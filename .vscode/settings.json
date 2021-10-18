@@ -99,6 +99,13 @@
       "ns": "user",
       "repl": "clj",
       "snippet": "(print-env-vars)"
+    },
+
+    {
+      "name": "Reload config",
+      "ns": "user",
+      "repl": "clj",
+      "snippet": "(reload-config)"
     }
   ],
   "calva.replConnectSequences": [

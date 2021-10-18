@@ -8,6 +8,7 @@
             [mount.core :as mount]
             [postmortem.core :as pm]
             [xero-syncer.core]
+            [xero-syncer.config]
             [xero-syncer.db.core :as db]
             [xero-syncer.services.rabbit-mq]
             [xero-syncer.services.syncer]))
@@ -91,6 +92,12 @@
   "Restarts rabbitmq connections"
   []
   (mount/start #'xero-syncer.services.syncer/schedules))
+
+(defn reload-config
+  "Reload config"
+  []
+  (mount/stop #'xero-syncer.config/env)
+  (mount/start #'xero-syncer.config/env))
 
 (defn reset-pm
   []

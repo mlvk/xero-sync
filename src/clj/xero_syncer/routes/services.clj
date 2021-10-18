@@ -53,6 +53,6 @@
    ["/oauth"
     {:get {:handler (fn [{:keys [query-params]}]
                       (let [code (get query-params "code")]
-                        (xero/xero-code->access-data! code)
+                        (xero/connect! code)
                         {:status 200
                          :body {:msg "ok"}}))}}]])

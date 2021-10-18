@@ -10,8 +10,13 @@
             [xero-syncer.config :refer [env]])
   (:import java.util.Base64))
 
+(declare refresh-access-data!)
+
 (defonce ^:private access-data (atom nil))
+(defonce ^:private connection-data (atom nil))
 (def xero-token-endpoint "https://identity.xero.com/connect/token")
+(def xero-connections-endpoint "https://api.xero.com/connections")
+
 (def grant-type-lookup-table
   {:authorization-code "authorization_code"
    :refresh "refresh_token"})
@@ -20,9 +25,14 @@
   (.encodeToString (Base64/getEncoder) (.getBytes to-encode)))
 
 (defn- persist-access-data!
-  "Persist the provided auth token to local state"
+  "Persist the provided access data to local state"
   [data]
   (reset! access-data (with-meta data {:created (t/now)})))
+
+(defn- persist-connection-data!
+  "Persist the provided connection data to local state"
+  [data]
+  (reset! connection-data (with-meta data {:created (t/now)})))
 
 (defn- generate-basic-auth-header
   "Generate the auth header per this spec https://developer.xero.com/documentation/guides/oauth2/auth-flow/#3-exchange-the-code
@@ -38,6 +48,24 @@
   []
   (boolean (:access_token @access-data)))
 
+(defn has-connection-data?
+  []
+  (boolean @connection-data))
+
+(defn tenant-id-by-name
+  [name]
+  (when (has-connection-data?)
+    (let [matches (filter (fn [c] (= (:tenantName c) name))
+                          @connection-data)
+          first-match (first matches)]
+      (:tenantId first-match))))
+
+(defn has-access?
+  "Is the app currently authorized to access the desired tenant?"
+  []
+  (boolean (and (has-access-data?)
+                (tenant-id-by-name (-> env :xero :tenant-name)))))
+
 (defn refresh-token
   []
   (:refresh_token @access-data))
@@ -46,8 +74,8 @@
   []
   (boolean (refresh-token)))
 
-(defn refresh-access-data!
-  "Refresh access data"
+(defn- refresh-main-access-data!
+  "Refresh the main access data"
   []
   (if (has-refresh-token?)
     (let [res (-> (client/post
@@ -120,22 +148,46 @@
                   :accept :json})
                 :body)]
 
+    (log/info {:what "Code token swap"
+               :msg "Code was successfully swapped for access data"})
     (persist-access-data! res)))
 
-(defn get-items
+(defn refresh-connection-data!
   []
-  (-> (client/get "https://api.xero.com/api.xro/2.0/Items"
-                  {:headers {:authorization (generate-bearer-auth-header)
-                             :Xero-Tenant-Id (-> env :xero :tenant-id)}
-                   :accept :json})
-      :body
-      (parse-string true)
-      :Items))
+  (if (has-access-data?)
+    (let [res (-> (client/get xero-connections-endpoint
+                              {:headers {:authorization (generate-bearer-auth-header)}
+                               :accept :json})
+                  :body
+                  (parse-string true))]
+      (log/info {:what "Connection data"
+                 :msg "Connection data refreshed successfully"})
+      (persist-connection-data! res))
+    (throw+ {:what "No access data"
+             :msg "You must have access data before requesting connectin data"})))
+
+(defn refresh-access-data!
+  "Refresh access data"
+  []
+  (refresh-main-access-data!)
+  (refresh-connection-data!))
+
+(defn connect!
+  [code]
+  (xero-code->access-data! code)
+  (refresh-connection-data!))
+
+(defn disconnect!
+  "Disconnect all auth and connection data"
+  []
+  (reset! access-data nil)
+  (reset! connection-data nil))
 
 (comment
-  (pprint (first (get-items)))
 
-  (pprint (get-items))
+  (disconnect!)
+
+  (refresh-connection-data!)
 
   (refresh-access-data!)
 
@@ -144,7 +196,12 @@
   (refresh-access-data!)
 
   (tap> @access-data)
+
+  @access-data
+  @connection-data
   ;; 
   )
 
 #_(tap> (pm/logs))
+
+

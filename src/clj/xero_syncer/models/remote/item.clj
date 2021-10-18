@@ -6,6 +6,8 @@
             [xero-syncer.config :refer [env]]
             [xero-syncer.services.xero :as xero]))
 
+(def xero-items-endpoint "https://api.xero.com/api.xro/2.0/Items/")
+
 (defn generate-auth-headers
   []
   {:authorization (xero/generate-bearer-auth-header)
@@ -13,7 +15,7 @@
 
 (defn find-item-by-xero-id
   [xero-id]
-  (try+ (-> (client/get (str "https://api.xero.com/api.xro/2.0/Items/" xero-id)
+  (try+ (-> (client/get (str xero-items-endpoint xero-id)
                         {:headers (generate-auth-headers)
                          :accept :json})
             :body
@@ -24,7 +26,7 @@
 (defn find-item-by-code
   [code]
   (try+
-   (-> (client/get (str "https://api.xero.com/api.xro/2.0/Items/" code)
+   (-> (client/get (str xero-items-endpoint code)
                    {:headers (generate-auth-headers)
                     :accept :json})
        :body
@@ -60,10 +62,6 @@
                                                  "AccountCode" (-> env :accounting :default-sales-account)}))]
     (generate-string payload)))
 
-(defn sync-local<-remote!
-  [{:keys [local remote]}])
-
-
 (defn update-item!
   "Update an item in xero based on local item data"
   [local-item-data xero-item-id]
@@ -72,7 +70,7 @@
               :body (local-item->xero-item-payload local-item-data)}]
 
     (try+
-     (-> (client/post (str "https://api.xero.com/api.xro/2.0/Items/" xero-item-id)
+     (-> (client/post (str xero-items-endpoint xero-item-id)
                       opts)
          :body
          (parse-string true)
@@ -89,7 +87,7 @@
               :body (local-item->xero-item-payload local-item-data)}]
 
     (try+
-     (-> (client/put (str "https://api.xero.com/api.xro/2.0/Items")
+     (-> (client/put (str xero-items-endpoint)
                      opts)
          :body
          (parse-string true)
@@ -97,7 +95,6 @@
          (first))
      (catch [:status 404] res res)
      (catch [:status 400] res res))))
-
 
 (defn sync-local->remote!
   [local-item-data]
