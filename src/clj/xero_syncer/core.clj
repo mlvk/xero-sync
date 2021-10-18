@@ -64,7 +64,7 @@
       (parse-opts cli-options)
       (mount/start-with-args #'xero-syncer.config/env))
   (cond
-    (nil? (:database-url env))
+    (nil? (-> env :db :host))
     (do
       (log/error "Database configuration not found, :database-url environment variable must be set before running")
       (System/exit 1))
