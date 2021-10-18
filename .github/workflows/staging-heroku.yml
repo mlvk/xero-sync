@@ -22,4 +22,4 @@ jobs:
           heroku_app_name: ${{secrets.HEROKU_STAGING_APP_NAME}}
           heroku_email: ${{secrets.HEROKU_EMAIL_ADDRESS}}
           team: whatisfood
-          branch: main
+          branch: staging
