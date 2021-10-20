@@ -103,35 +103,3 @@
              :table table
              :msg (str "Successfully updated record with id: " id)})
   (db/execute-one! (update-record-sql table id props)))
-
-
-
-#_(-> (get-records :companies)
-      (first))
-;; => {:terms 0, :is_vendor false, :name "Pure Pressed LA", :location_code_prefix "pur", :updated_at #inst "2018-10-13T07:30:44.666627000-00:00", :xero_id "ec6bb2a2-9898-4909-bf9c-12fa9b5fe463", :price_tier_id 5, :id 79, :is_customer true, :active_state 0, :sync_state 1, :created_at #inst "2017-03-09T23:07:44.538292000-00:00"}
-
-
-#_(get-record-by-id :items 135)
-
-#_(mark-record-unsynced! :items 135)
-
-#_(get-record-by-id :companies 78)
-  ;; => {:terms 0, :is_vendor false, :name "Sara Bordeos", :location_code_prefix "sar", :updated_at #inst "2017-02-23T23:33:38.278559000-00:00", :xero_id "02b0ee55-07d7-48a3-8411-409c7dee1750", :price_tier_id 3, :id 78, :is_customer true, :active_state 0, :sync_state 1, :created_at #inst "2017-02-23T23:33:32.938764000-00:00"}
-
-  ;; => {:terms 0, :is_vendor false, :name "Sara Bordeos", :location_code_prefix "sar", :updated_at #inst "2017-02-23T23:33:38.278559000-00:00", :xero_id "fd5f2457-e337-4982-a14a-862c0babb19a", :price_tier_id 3, :id 78, :is_customer true, :active_state 0, :sync_state 1, :created_at #inst "2017-02-23T23:33:32.938764000-00:00"}
-
-  ;; => {:terms 0, :is_vendor false, :name "Sara Bordeos", :location_code_prefix "sar", :updated_at #inst "2017-02-23T23:33:38.278559000-00:00", :xero_id "fd5f2457-e337-4982-a14a-862c0babb19a", :price_tier_id 3, :id 78, :is_customer true, :active_state 0, :sync_state 1, :created_at #inst "2017-02-23T23:33:32.938764000-00:00"}
-
-  ;; => {:terms 0, :is_vendor false, :name "Sara Bordeos", :location_code_prefix "sar", :updated_at #inst "2017-02-23T23:33:38.278559000-00:00", :xero_id "fd5f2457-e337-4982-a14a-862c0babb19a", :price_tier_id 3, :id 78, :is_customer true, :active_state 0, :sync_state 1, :created_at #inst "2017-02-23T23:33:32.938764000-00:00"}
-
-  ;; => {:terms 0, :is_vendor false, :name "Sara Bordeos", :location_code_prefix "sar", :updated_at #inst "2017-02-23T23:33:38.278559000-00:00", :xero_id "fd5f2457-e337-4982-a14a-862c0babb19a", :price_tier_id 3, :id 78, :is_customer true, :active_state 0, :sync_state 1, :created_at #inst "2017-02-23T23:33:32.938764000-00:00"}
-
-  ;; => {:terms 0, :is_vendor false, :name "Sara Bordeos", :location_code_prefix "sar", :updated_at #inst "2017-02-23T23:33:38.278559000-00:00", :xero_id "fd5f2457-e337-4982-a14a-862c0babb19a", :price_tier_id 3, :id 78, :is_customer true, :active_state 0, :sync_state 1, :created_at #inst "2017-02-23T23:33:32.938764000-00:00"}
-
-  ;; => {:terms 0, :is_vendor false, :name "Pure Pressed LA", :location_code_prefix "pur", :updated_at #inst "2018-10-13T07:30:44.666627000-00:00", :xero_id "ec6bb2a2-9898-4909-bf9c-12fa9b5fe463", :price_tier_id 5, :id 79, :is_customer true, :active_state 0, :sync_state 1, :created_at #inst "2017-03-09T23:07:44.538292000-00:00"}
-
-
-#_(mark-record-unsynced! :companies 78)
-  ;; => {:terms 0, :is_vendor false, :name "Sara Bordeos", :location_code_prefix "sar", :updated_at #inst "2017-02-23T23:33:38.278559000-00:00", :xero_id "fd5f2457-e337-4982-a14a-862c0babb19a", :price_tier_id 3, :id 78, :is_customer true, :active_state 0, :sync_state 0, :created_at #inst "2017-02-23T23:33:32.938764000-00:00"}
-
-  ;; => {:terms 0, :is_vendor false, :name "Pure Pressed LA", :location_code_prefix "pur", :updated_at #inst "2018-10-13T07:30:44.666627000-00:00", :xero_id "ec6bb2a2-9898-4909-bf9c-12fa9b5fe463", :price_tier_id 5, :id 79, :is_customer true, :active_state 0, :sync_state 0, :created_at #inst "2017-03-09T23:07:44.538292000-00:00"}

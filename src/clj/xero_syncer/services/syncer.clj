@@ -26,6 +26,7 @@
     :company (company-syncer/local->remote! payload)
     :sales-order (sales-order-syncer/local->remote! payload)))
 
+;; @TODO - WIP - Need to decide if we want upstream sync
 #_(defn remote->local-sync-handler
     "Handler for the remote->local-sync queue"
     [_ _ payload]
@@ -38,6 +39,8 @@
   "Create all rabbit mq subscriptions. Subscribe to new messages on a queue"
   []
   [(mq/subscribe mq/local->remote-queue #'local->remote-sync-handler)
+
+  ;;  Disable upstream sync for now
    #_(mq/subscribe mq/remote->local-queue #'remote->local-sync-handler)])
 
 (defn create-schedules!

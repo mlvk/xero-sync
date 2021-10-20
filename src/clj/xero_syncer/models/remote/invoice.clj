@@ -154,9 +154,3 @@
     (if has-match?
       (update-invoice! local-record-data remote-xero-id)
       (create-invoice! local-record-data))))
-
-
-(tap> (find-invoice-by-xero-id (:xero_id nil)))
-;; => {:LineAmountTypes "NoTax", :AmountDue 0.0, :CreditNotes [], :LineItems [], :DueDateString "2020-10-01T00:00:00", :UpdatedDateUTC "/Date(1316548408613+0000)/", :HasAttachments false, :Overpayments [], :CurrencyCode "USD", :AmountPaid 90.0, :InvoiceNumber "RPT644-1", :RepeatingInvoiceID "cc34c95b-2e26-4522-9b04-81d102cd929c", :AmountCredited 0.0, :Prepayments [], :DateString "2020-09-21T00:00:00", :IsDiscounted false, :HasErrors false, :Total 90.0, :Date "/Date(1600646400000+0000)/", :InvoiceID "20ff01b8-c2d8-49bb-8abf-a9486c9ea665", :TotalTax 0.0, :Payments [{:PaymentID "2d173f02-90b0-4c30-bbe8-c83c2a4c8575", :BatchPaymentID "c330ad9b-d288-472f-9a3e-36a399e4770c", :Date "/Date(1601251200000+0000)/", :Amount 90.0, :Reference "", :CurrencyRate 1.0, :HasAccount false, :HasValidationErrors false}], :SubTotal 90.0, :Type "ACCPAY", :CurrencyRate 1.0, :Contact {:ContactID "ac565f9c-9829-4f51-8a5b-0400de972b3c", :Name "PowerDirect", :Addresses [], :Phones [], :ContactGroups [], :ContactPersons [], :HasValidationErrors false}, :DueDate "/Date(1601510400000+0000)/", :Reference "", :Status "PAID", :FullyPaidOnDate "/Date(1601251200000+0000)/"}
-
-(str xero-invoices-endpoint nil)

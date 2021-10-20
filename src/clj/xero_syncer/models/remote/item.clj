@@ -125,5 +125,3 @@
     (if has-match?
       (update-item! local-item-data xero-item-id)
       (create-item! local-item-data))))
-
-#_(upsert-items! (li/get-sell-items))
