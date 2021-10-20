@@ -7,17 +7,16 @@
             [langohr.exchange :as le]
             [langohr.queue     :as lq]
             [mount.core :as mount]
-            [postmortem.core :as pm]
             [slingshot.slingshot :refer [try+]]
             [time-literals.read-write]
             [xero-syncer.config :refer [env]]))
 
 (def main-exchange "main-exchange")
 (def local->remote-queue "local->remote")
-(def remote->local-queue "remote->local")
-(def customer-communications-queue "customer-communications")
 
 (declare start)
+
+(defonce consumers (atom []))
 
 (mount/defstate ^{:on-reload :noop} conn
   :start (rmq/connect {:uri (:cloudamqp-url env)})
@@ -35,8 +34,6 @@
   (clojure.edn/read-string
    {:readers time-literals.read-write/tags}
    (String. payload "UTF-8")))
-
-(defonce consumers (atom []))
 
 (defn unsubscribe!
   [tag-id]
@@ -60,12 +57,9 @@
   [queue handler & {:keys [opts]
                     :or {opts {:auto-ack true}}}]
   (let [tag-id (lc/subscribe chan queue (fn [ch meta payload]
-                                          (pm/spy>> :payload {:payload payload})
+                                          {:payload payload}
                                           (handler ch meta (edn-response-decoder payload))) opts)]
-    (swap!
-     consumers conj tag-id)
-
-    tag-id))
+    (swap! consumers conj tag-id) tag-id))
 
 (defn create-default-exchanges
   [exchanges]
@@ -87,21 +81,11 @@
   (create-default-exchanges [{:name main-exchange
                               :type "topic"}])
 
-  (create-queues [local->remote-queue
-                  remote->local-queue
-                  customer-communications-queue])
+  (create-queues [local->remote-queue])
 
   (create-routes [{:exchange main-exchange
                    :queue local->remote-queue
-                   :route-key "sync.local.*"}
-
-                  {:exchange main-exchange
-                   :queue remote->local-queue
-                   :route-key "sync.remote.*"}
-
-                  {:exchange main-exchange
-                   :queue customer-communications-queue
-                   :route-key "customer-communications.*"}]))
+                   :route-key "sync.local.*"}]))
 
 (comment
 
@@ -110,11 +94,7 @@
   (subscribe "local->remote" (fn [ch meta res] (tap> {:subscribed-as "local->remote"
                                                       :res res})))
 
-  (subscribe "remote->local" (fn [ch meta res] (tap> {:subscribed-as "remote->local"
-                                                      :res res})))
-
   (publish :topic "sync.local.item" :payload {:name "Carrot2"})
-  (publish :topic "sync.remote.item" :payload {:name "Carrot3"})
 
 ;;   
   )

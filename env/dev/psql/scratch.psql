@@ -1,7 +1,5 @@
-UPDATE
-    orders t
-SET
-    xero_id = 'a1710b98-0f6b-47cc-97a1-a83c99e7bd71',
-    order_number = 'RPT644-1'
-WHERE
-    t.id = 2882
+SELECT
+    *
+FROM
+    companies
+LIMIT 1

@@ -2,6 +2,7 @@
   (:require [mount.core :as mount]
             [tick.core :as t]
             [xero-syncer.services.rabbit-mq :as mq]
+            [clojure.tools.logging :as log]
             [xero-syncer.services.scheduler :as scheduler]
             [xero-syncer.services.xero :as xero]
             [xero-syncer.syncers.item :as item-syncer]
@@ -11,75 +12,52 @@
 (declare create-subscriptions! create-schedules!)
 
 (mount/defstate ^{:on-reload :noop} subscriptions
-  :start (create-subscriptions!)
+  :start (do
+           (log/info {:what :service
+                      :msg "Starting all subscriptions"})
+           (create-subscriptions!))
   :stop (mq/unsubscribe-tags! :tags subscriptions))
 
 (mount/defstate ^{:on-reload :noop} schedules
-  :start (create-schedules!)
+  :start (do
+           (log/info {:what :service
+                      :msg "Starting all schedules"})
+           (create-schedules!))
   :stop (scheduler/stop-all-schedules))
 
 (defn local->remote-sync-handler
   "Handler for the local->remote-sync queue"
   [_ _ payload]
   (case (:type payload)
-    :item (item-syncer/local->remote payload)
-    :company (company-syncer/local->remote! payload)
-    :sales-order (sales-order-syncer/local->remote! payload)))
-
-;; @TODO - WIP - Need to decide if we want upstream sync
-#_(defn remote->local-sync-handler
-    "Handler for the remote->local-sync queue"
-    [_ _ payload]
-    (case (:type payload)
-      :item (item-syncer/remote->local payload)
-      :company (company-syncer/remote->local! payload)
-      :sales-order (sales-order-syncer/remote->local! payload)))
+    :item (item-syncer/batch-local->remote! payload)
+    :company (company-syncer/batch-local->remote! payload)
+    :sales-order (sales-order-syncer/batch-local->remote! payload)))
 
 (defn create-subscriptions!
   "Create all rabbit mq subscriptions. Subscribe to new messages on a queue"
   []
-  [(mq/subscribe mq/local->remote-queue #'local->remote-sync-handler)
-
-  ;;  Disable upstream sync for now
-   #_(mq/subscribe mq/remote->local-queue #'remote->local-sync-handler)])
+  [(mq/subscribe mq/local->remote-queue #'local->remote-sync-handler)])
 
 (defn create-schedules!
   "Create all schedules. Functions to be called on a schedule"
   []
   [(scheduler/create-schedule
     :name "Check for unsynced local items"
-    :handler #'item-syncer/check-unsynced-local-items
+    :handler #'item-syncer/queue-ready-to-sync-items
     :frequency (t/new-duration 10 :seconds))
 
    (scheduler/create-schedule
     :name "Check for unsynced local companies"
-    :handler #'company-syncer/check-unsynced-local-companies
+    :handler #'company-syncer/queue-ready-to-sync-companies
     :frequency (t/new-duration 10 :seconds))
 
    (scheduler/create-schedule
     :name "Check for unsynced sales orders"
-    :handler #'sales-order-syncer/check-unsynced-local-sales-orders
-    :frequency (t/new-duration 10 :seconds))
+    :handler #'sales-order-syncer/queue-ready-to-sync-sales-orders
+    :frequency (t/new-duration 1 :minutes))
 
    (scheduler/create-schedule
     :name "Refresh access data"
     :handler #'xero/refresh-access-data!
     :frequency (t/new-duration 15 :minutes))])
-
-subscriptions
-
-(comment
-
-  (create-subscriptions!)
-
-  (mq/unsubscribe-tags!)
-
-  (mq/publish :topic "sync.local.item" :payload {:type :item
-                                                 :name "carrots"})
-  (mq/publish :topic "sync.remote.item" :payload {:type :item
-                                                  :name "carrots xero"})
-
-;;   
-  )
-
 

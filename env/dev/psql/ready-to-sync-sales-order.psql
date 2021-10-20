@@ -1,0 +1,14 @@
+SELECT
+    o.id order_id,
+    count(oi.id) total_line_items
+FROM
+    orders o
+    LEFT JOIN order_items oi ON o.id = oi.order_id
+WHERE
+    o.sync_state = 0
+    AND o.published_state = 1
+    AND o.order_type = 'sales-order'
+GROUP BY
+    o.id
+HAVING
+    count(oi.id) = 0

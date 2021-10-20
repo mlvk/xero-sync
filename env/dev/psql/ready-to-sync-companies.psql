@@ -1,0 +1,6 @@
+SELECT
+    *
+FROM
+    companies c
+WHERE
+    c.sync_state = '1'

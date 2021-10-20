@@ -8,7 +8,7 @@
             [xero-syncer.config :refer [env]]
             [xero-syncer.models.local.company :as lc]
             [xero-syncer.models.local.generic-record :as gr]
-            [xero-syncer.models.local.sales-order :as lso]
+            [xero-syncer.models.local.order :as lo]
             [xero-syncer.services.xero :as xero]))
 
 (def xero-invoices-endpoint "https://api.xero.com/api.xro/2.0/Invoices/")
@@ -59,7 +59,7 @@
       {"ItemCode" item-code
        "Quantity" quantity
        "Description" description
-       "UnitAmmount" unit-price
+       "UnitAmount" unit-price
        "LineAmount" line-amount
        "AccountCode" account-code})))
 
@@ -69,7 +69,7 @@
   (let [company (lc/get-company-by-order-id id)
         due-date (calc-due-date delivery_date (:terms company))
         company-xero-id (:xero_id company)
-        order-items (lso/get-order-items-by-order-id id)
+        order-items (lo/get-order-items-by-order-id id)
         line-items (build-line-items-payload order-items)
         date-formatted (t/format "yyyy-MM-dd" delivery_date)
         due-date-formatted (t/format "yyyy-MM-dd" due-date)]
@@ -131,7 +131,7 @@
                  :accept :json
                  :body body}]
     (try+
-     (-> (client/post xero-invoices-endpoint
+     (-> (client/post (str xero-invoices-endpoint "?summarizeErrors=false")
                       payload)
          :body
          (parse-string true)

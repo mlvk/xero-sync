@@ -5,13 +5,16 @@
             [honey.sql.helpers :as hh]))
 
 (defn- get-records-sql
-  [table]
+  [table & {:keys [where]
+            :or {where []}}]
   (-> (hh/select :*)
-      (hh/from table)))
+      (hh/from [table :t])
+      (hh/where where)))
 
 (defn get-records
   "Get all records for a given table"
-  [table] (db/execute! (#'get-records-sql table)))
+  [table & {:keys [where]
+            :or {where []}}] (db/execute! (#'get-records-sql table :where where)))
 
 (defn- get-record-by-ids-sql
   [table ids]

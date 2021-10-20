@@ -49,11 +49,13 @@
 
   (cond-> {"Code" code
            "Name" name
-           "Description" description
+
            "IsSold" is_sold
            "IsPurchased" is_purchased}
+    is_sold (assoc "Description" description)
     is_purchased (assoc "PurchaseDetails" {"UnitPrice" default_price
-                                           "AccountCode" (-> env :accounting :default-cogs-account)})
+                                           "AccountCode" (-> env :accounting :default-cogs-account)}
+                        "PurchaseDescription" description)
     is_sold (assoc "SalesDetails" {"UnitPrice" default_price
                                    "AccountCode" (-> env :accounting :default-sales-account)})))
 

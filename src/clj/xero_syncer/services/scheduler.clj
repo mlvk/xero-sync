@@ -1,5 +1,6 @@
 (ns xero-syncer.services.scheduler
   (:require [chime.core :as chime]
+            [clojure.tools.logging :as log]
             [mount.core :as mount]
             [nano-id.core :refer [nano-id]]
             [tick.core :as t]))
@@ -80,9 +81,10 @@
 (defn stop-all-schedules
   "Stop all running schedules"
   []
+  (log/info {:what :service
+             :msg "Stopping all schedules"})
   (doseq [schedule @schedules]
     (stop-schedule (:id schedule))))
-
 
 (comment
   (create-schedule

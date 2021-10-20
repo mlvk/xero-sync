@@ -52,6 +52,8 @@
   (shutdown-agents))
 
 (defn start-app [args]
+  (log/info {:what :service
+             :msg "Starting app"})
   (doseq [component (-> args
                         (parse-opts cli-options)
                         mount/start-with-args

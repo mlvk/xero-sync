@@ -1,79 +1,62 @@
 (ns xero-syncer.syncers.item
   (:require [xero-syncer.services.rabbit-mq :as mq]
             [xero-syncer.constants.topics :as topics]
-            [xero-syncer.models.remote.item :as rim]
+            [postmortem.core :as pm]
+            [xero-syncer.models.remote.item :as ri]
             [clojure.tools.logging :as log]
             [xero-syncer.models.local.generic-record :as gr]
-            [xero-syncer.models.local.item :as lim]))
+            [xero-syncer.models.local.item :as li]))
 
-(defn remote->local
-  "Sync a local item to xero"
-  [{:keys [origin-item-id data]}]
+(defn batch-local->remote!
+  "Batch sync items to xero items. 
+   Requires the follow data arg
 
-  (let [xero-code (:Code data)
-        xero-id (:ItemID data)
-        local-item (or
-                    (gr/get-record-by-id :items origin-item-id)
-                    (lim/get-item-by-code xero-code)
-                    (gr/get-record-by-xero-id :items xero-id))
-        local-item-id (:id local-item)
-        has-local-item? (boolean local-item)
-        update-fields {:code xero-code
-                       :xero_id xero-id
-                       :name (:Name data)}]
-
-    (when has-local-item?
-      (gr/update-record! :items local-item-id update-fields))))
-
-(defn- handle-xero-item-result!
-  "Handle the result of a xero sync and merge back changes locally"
-  [data]
-  (let [xero-code (:Code data)
-        xero-id (:ItemID data)
-        local-item (or
-                    (lim/get-item-by-code xero-code)
-                    (gr/get-record-by-xero-id :items xero-id))
-        local-item-id (:id local-item)
-        has-local-item? (boolean local-item)
-        update-fields {:code xero-code
-                       :xero_id xero-id
-                       :name (:Name data)}]
-
-    (when has-local-item?
-      (gr/update-record! :items local-item-id update-fields))))
-
-(defn local->remote
-  [{:keys [data]}]
-  (let [local-item-id (:id data)
-        result (rim/sync-local->remote! data)]
-
-    (handle-xero-item-result! result)
-    (gr/mark-record-synced! :items local-item-id)
-
-    (log/info {:what "Sync status"
-               :direction :local->remote
-               :msg (str "Successfully synced item with id: " local-item-id)})))
-
-(defn batch-local->remote
+   Arg - {:data {:ids [1 2 3]}}
+   The item ids to sync
+   "
   [{:keys [data]}]
   (let [items (gr/get-record-by-ids :items (:ids data))
-        results (rim/upsert-items! items)]
+        results (ri/upsert-items! items)]
 
     (doseq [r results]
-      (let [match-local (handle-xero-item-result! r)]
+      (let [match-local (li/remote->local! {:remote-data r})]
         (when match-local
           (gr/mark-record-synced! :items (:id match-local))
           (log/info {:what "Sync status"
                      :direction :local->remote
                      :msg (str "Successfully synced item with id: " (:id match-local))}))))))
 
-(defn check-unsynced-local-items
-  "Check for unsynced local items. Pushes results to rabbit mq local->remote queue"
-  []
-  (let [next-item (first (gr/get-unsynced-records :items))]
-    (when next-item
+(defn queue-ready-to-sync-items
+  "Check for unsynced local item Pushes results to rabbit mq local->remote queue
+   
+   Args
+
+   Optional
+   1. chunk-size - Int - How many items to grab at once
+   "
+  [& {:keys [chunk-size]
+      :or {chunk-size 50}}]
+  (let [ready-to-sync-item-ids (li/get-ready-to-sync-item-ids :limit chunk-size)]
+    (when (seq ready-to-sync-item-ids)
       (mq/publish :topic topics/sync-local-item :payload {:type :item
-                                                          :data next-item}))))
+                                                          :data {:ids ready-to-sync-item-ids}}))))
+
+(defn force-sync-all-items
+  []
+  (let [all-active-items (gr/get-records :items :where [:= :t.active true])
+        ids (map :id all-active-items)]
+
+    (mq/publish :topic topics/sync-local-item :payload {:type :item
+                                                        :data {:ids ids}})))
+
+
 
 #_(mq/publish :topic topics/sync-local-item :payload {:type :item
-                                                      :data (lim/get-item-by-code "r-016")})
+                                                      :data {:ids [(li/get-item-by-code "r-016")]}})
+
+#_(count (gr/get-records :items :where [:= :t.active true]))
+
+
+#_(force-sync-all-items)
+
+#_(gr/get-records :items :where [:= :t.active true])

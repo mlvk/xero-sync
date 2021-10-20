@@ -1,0 +1,7 @@
+SELECT
+    *
+FROM
+    items i
+WHERE
+    i.sync_state = '0'
+    AND i.active = TRUE
