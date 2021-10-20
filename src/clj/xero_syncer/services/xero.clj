@@ -60,6 +60,10 @@
           first-match (first matches)]
       (:tenantId first-match))))
 
+(defn current-tenant-id
+  []
+  (tenant-id-by-name (-> env :xero :tenant-name)))
+
 (defn has-access?
   "Is the app currently authorized to access the desired tenant?"
   []
@@ -135,7 +139,12 @@
 
 (defn generate-bearer-auth-header [] (str "Bearer " (get-access-token!)))
 
-(defn xero-code->access-data!
+(defn generate-auth-headers
+  []
+  {:authorization (generate-bearer-auth-header)
+   :Xero-Tenant-Id (current-tenant-id)})
+
+(defn- xero-code->access-data!
   "Converts a code to a token per: https://developer.xero.com/documentation/guides/oauth2/auth-flow/#3-exchange-the-code"
   [code]
   (let [res (-> (client/post

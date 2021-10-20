@@ -3,6 +3,7 @@
             [reitit.ring.coercion :as coercion]
             [reitit.ring.middleware.multipart :as multipart]
             [reitit.ring.middleware.muuntaja :as muuntaja]
+            [xero-syncer.utils.health-checks :as health]
             [clojure.pprint :refer [pprint]]
             [reitit.ring.middleware.parameters :as parameters]
             [reitit.swagger :as swagger]
@@ -49,6 +50,9 @@
 
    ["/ping"
     {:get (constantly (ok {:message "pong"}))}]
+
+   ["/health-check"
+    {:get {:handler #'health/health-check}}]
 
    ["/oauth"
     {:get {:handler (fn [{:keys [query-params]}]

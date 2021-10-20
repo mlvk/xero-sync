@@ -4,7 +4,9 @@
             [xero-syncer.services.rabbit-mq :as mq]
             [xero-syncer.services.scheduler :as scheduler]
             [xero-syncer.services.xero :as xero]
-            [xero-syncer.syncers.item :as item-syncer]))
+            [xero-syncer.syncers.item :as item-syncer]
+            [xero-syncer.syncers.company :as company-syncer]
+            [xero-syncer.syncers.sales-orders :as sales-order-syncer]))
 
 (declare create-subscriptions! create-schedules!)
 
@@ -20,19 +22,23 @@
   "Handler for the local->remote-sync queue"
   [_ _ payload]
   (case (:type payload)
-    :item (item-syncer/local->remote payload)))
+    :item (item-syncer/local->remote payload)
+    :company (company-syncer/local->remote! payload)
+    :sales-order (sales-order-syncer/local->remote! payload)))
 
-(defn remote->local-sync-handler
-  "Handler for the remote->local-sync queue"
-  [_ _ payload]
-  (case (:type payload)
-    :item (item-syncer/remote->local payload)))
+#_(defn remote->local-sync-handler
+    "Handler for the remote->local-sync queue"
+    [_ _ payload]
+    (case (:type payload)
+      :item (item-syncer/remote->local payload)
+      :company (company-syncer/remote->local! payload)
+      :sales-order (sales-order-syncer/remote->local! payload)))
 
 (defn create-subscriptions!
   "Create all rabbit mq subscriptions. Subscribe to new messages on a queue"
   []
   [(mq/subscribe mq/local->remote-queue #'local->remote-sync-handler)
-   (mq/subscribe mq/remote->local-queue #'remote->local-sync-handler)])
+   #_(mq/subscribe mq/remote->local-queue #'remote->local-sync-handler)])
 
 (defn create-schedules!
   "Create all schedules. Functions to be called on a schedule"
@@ -40,6 +46,16 @@
   [(scheduler/create-schedule
     :name "Check for unsynced local items"
     :handler #'item-syncer/check-unsynced-local-items
+    :frequency (t/new-duration 10 :seconds))
+
+   (scheduler/create-schedule
+    :name "Check for unsynced local companies"
+    :handler #'company-syncer/check-unsynced-local-companies
+    :frequency (t/new-duration 10 :seconds))
+
+   (scheduler/create-schedule
+    :name "Check for unsynced sales orders"
+    :handler #'sales-order-syncer/check-unsynced-local-sales-orders
     :frequency (t/new-duration 10 :seconds))
 
    (scheduler/create-schedule
