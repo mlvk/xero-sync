@@ -61,3 +61,18 @@
     :handler #'xero/refresh-access-data!
     :frequency (t/new-duration 15 :minutes))])
 
+(defn restart-schedules
+  "Restart schedules"
+  []
+  (mount/stop #'schedules)
+  (mount/start #'schedules))
+
+(defn stop-schedules
+  "Stop schedules"
+  []
+  (mount/stop #'schedules))
+
+(defn start-schedules
+  "Start schedules"
+  []
+  (mount/start #'schedules))
