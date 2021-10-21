@@ -1,7 +1,7 @@
 (defproject xero-syncer "0.1.0-SNAPSHOT"
 
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "Xero Syncer"
+  :url ""
 
   :dependencies [[ch.qos.logback/logback-classic "1.2.5"]
                  [clojure.java-time "0.3.3"]
@@ -24,18 +24,14 @@
                  [mount "0.1.16"]
                  [org.clojure/data.codec "0.1.1"]
                  [nrepl "0.8.3"]
-
                  [com.github.seancorfield/honeysql "2.1.818"]
                  [hikari-cp "2.13.0"]
                  [com.github.seancorfield/next.jdbc "1.2.737"]
-
                  [com.novemberain/langohr "5.1.0"]
                  [com.taoensso/nippy "3.1.1"]
-
                  [cheshire "5.10.0"]
                  [crouton "0.1.2"]
                  [org.clojure/tools.reader "1.3.6"]
-
                  [org.clojure/clojure "1.10.3"]
                  [org.clojure/tools.cli "1.0.206"]
                  [org.clojure/tools.logging "1.1.0"]

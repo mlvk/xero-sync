@@ -9,6 +9,7 @@
             [postmortem.core :as pm]
             [xero-syncer.core]
             [xero-syncer.config]
+            [clojure.tools.logging :as log]
             [xero-syncer.db.core :as db]
             [xero-syncer.services.rabbit-mq]
             [xero-syncer.services.syncer]))
@@ -21,16 +22,22 @@
   "Starts application.
   You'll usually want to run this on startup."
   []
-  (mount/start-without #'xero-syncer.core/repl-server))
+  (println "Starting")
+  (mount/start-without #'xero-syncer.services.syncer/schedules
+                       #'xero-syncer.core/repl-server))
 
 (defn stop
   "Stops application."
   []
+  (log/info {:what :core
+             :msg "Stop"})
   (mount/stop-except #'xero-syncer.core/repl-server))
 
 (defn restart
   "Restarts application."
   []
+  (log/info {:what :core
+             :msg "Restart"})
   (stop)
   (start))
 
