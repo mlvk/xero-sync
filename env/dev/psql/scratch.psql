@@ -1,5 +1,25 @@
 SELECT
     *
 FROM
-    companies
-LIMIT 1
+    items i
+WHERE
+    i.code = 'C-006 - CH';
+
+SELECT
+    *
+FROM
+    orders o
+    JOIN order_items oi ON o.id = oi.order_id
+WHERE
+    o.xero_id = '00000000-0000-0000-0000-000000000000';
+
+SELECT
+    *
+FROM
+    orders o
+    JOIN order_items oi ON o.id = oi.order_id
+    JOIN locations l ON l.id = o.location_id
+    JOIN companies c ON c.id = l.company_id
+WHERE
+    o.order_number = 'so-200420-a8e1';
+
