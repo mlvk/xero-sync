@@ -17,6 +17,7 @@
                  [luminus-migrations "0.7.1"]
                  [luminus-transit "0.1.2"]
                  [luminus/ring-ttl-session "0.3.3"]
+                 [metosin/malli "0.6.2"]
                  [markdown-clj "1.10.6"]
                  [metosin/muuntaja "0.6.8"]
                  [metosin/reitit "0.5.15"]
