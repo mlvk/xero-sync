@@ -39,11 +39,8 @@
                  coercion/coerce-request-middleware
                  ;; multipart
                  multipart/multipart-middleware
-                 ;;  Auth
-                 auth/wrap-api-key-authorized-middleware
                  ;;  Logging
-                 logger/wrap-logger-middleware]
-    :parameters {:header {:x-api-key string?}}}
+                 logger/wrap-logger-middleware]}
 
    ;; swagger documentation
    ["" {:no-doc true
@@ -54,35 +51,41 @@
      {:get (swagger/create-swagger-handler)}]
 
     ["/api-docs/*"
-     {:get (swagger-ui/create-swagger-ui-handler
+     {:middleware [auth/wrap-api-key-authorized-middleware]
+      :get (swagger-ui/create-swagger-ui-handler
             {:url "/api/swagger.json"
              :config {:validator-url nil}})}]]
 
-   ["/ping"
-    {:get (constantly (ok {:message "pong"}))}]
+   ["/p"
+    {:parameters {:header {:x-api-key string?}}
+     :middleware [auth/wrap-api-key-authorized-middleware]}
+    ["/ping"
+     {:get (constantly (ok {:message "pong"}))}]
 
-   ["/status"
-    {:get {:handler (fn [_]
-                      {:code 200
-                       :body {:xero (xero/health-check)
-                              :services {:scheduler {:active-schedules (scheduler-service/current-schedules)}}}})}}]
+    ["/status"
+     {:get {:handler (fn [_]
+                       {:code 200
+                        :body {:xero (xero/health-check)
+                               :services {:scheduler {:active-schedules (scheduler-service/current-schedules)}}}})}}]
 
-   ["/services"
-    ["/scheduler"
-     {:post {:parameters {:body {:action string?}}
-             :handler (fn [request]
-                        (let [action (-> request :parameters :body :action)]
-                          (case action
-                            "start" (syncer-service/start-schedules)
-                            "stop" (syncer-service/stop-schedules)
-                            "restart" (syncer-service/restart-schedules)
-                            (throw+ {:what :missing-action
-                                     :msk (str "No action found matching " action)}))
+    ["/services"
 
-                          {:code 200
-                           :body {:msg (str "Performed syncer " action)}}))}}]]
-   ["/health-check"
-    {:get {:handler #'health/health-check}}]
+     ["/scheduler"
+      {:post {:parameters {:body {:action string?}}
+              :handler (fn [request]
+                         (let [action (-> request :parameters :body :action)]
+                           (case action
+                             "start" (syncer-service/start-schedules)
+                             "stop" (syncer-service/stop-schedules)
+                             "restart" (syncer-service/restart-schedules)
+                             (throw+ {:what :missing-action
+                                      :msk (str "No action found matching " action)}))
+
+                           {:code 200
+                            :body {:msg (str "Performed syncer " action)}}))}}]]
+
+    ["/health-check"
+     {:get {:handler #'health/health-check}}]]
 
    ["/oauth"
     {:get {:handler (fn [{:keys [query-params]}]
