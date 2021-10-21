@@ -53,24 +53,24 @@
 
 (defn start-app [args]
   (println "Calling start-app")
+  (println args)
   (log/info {:what :service
              :msg "Starting app"})
-  (doseq [component (-> args
-                        (parse-opts cli-options)
-                        (mount/with-args)
-                        (mount/except [#'xero-syncer.services.syncer/schedules])
-                        (mount/start)
-                        :started)]
+  (doseq [component (->
+                     (mount/except [#'xero-syncer.services.syncer/schedules])
+                     (mount/start-with-args #'xero-syncer.config/env)
+                     :started)]
     (log/info component "started"))
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app)))
 
 (defn -main [& args]
   (println "Calling main")
-  (-> args
-      (parse-opts cli-options)
-      (mount/with-args #'xero-syncer.config/env)
-      (mount/except [#'xero-syncer.services.syncer/schedules])
-      (mount/start))
+  (println args)
+
+  (->
+   (mount/except [#'xero-syncer.services.syncer/schedules])
+   (mount/start-with-args #'xero-syncer.config/env))
+
   (cond
     (nil? (-> env :db :host))
     (do
@@ -78,4 +78,3 @@
       (System/exit 1))
     :else
     (start-app args)))
-
