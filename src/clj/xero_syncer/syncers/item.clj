@@ -45,7 +45,7 @@
   []
   (log/info {:what "Sync"
              :msg "Starting force sync all items"})
-  (let [all-active-items (gr/get-records :items :where [:= :t.active true])
+  (let [all-active-items (gr/get-records :items)
         ids (map :id all-active-items)]
 
     (mq/publish :topic topics/sync-local-item :payload {:type :item
