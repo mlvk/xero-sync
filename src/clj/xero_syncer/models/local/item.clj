@@ -59,4 +59,4 @@
                     :xero_id xero-id
                     :name xero-name}]
 
-    (gr/merge-remote-response->local :orders maybe-local-record remote-data change-set)))
+    (gr/merge-remote-response->local :items maybe-local-record remote-data change-set)))

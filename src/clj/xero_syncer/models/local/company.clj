@@ -51,4 +51,4 @@
         change-set {:xero_id xero-id
                     :name (:Name remote-data)}]
 
-    (gr/merge-remote-response->local :orders maybe-local-record remote-data change-set)))
+    (gr/merge-remote-response->local :companies maybe-local-record remote-data change-set)))
