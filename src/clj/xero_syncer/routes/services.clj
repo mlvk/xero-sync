@@ -7,6 +7,8 @@
             [xero-syncer.services.scheduler :as scheduler-service]
             [xero-syncer.services.syncer :as syncer-service]
             [clojure.pprint :refer [pprint]]
+            [xero-syncer.syncers.item :as item-syncer]
+            [xero-syncer.syncers.company :as company-syncer]
             [reitit.ring.middleware.parameters :as parameters]
             [reitit.swagger :as swagger]
             [xero-syncer.middleware.logger :as logger]
@@ -51,8 +53,7 @@
      {:get (swagger/create-swagger-handler)}]
 
     ["/api-docs/*"
-     {:middleware [auth/wrap-api-key-authorized-middleware]
-      :get (swagger-ui/create-swagger-ui-handler
+     {:get (swagger-ui/create-swagger-ui-handler
             {:url "/api/swagger.json"
              :config {:validator-url nil}})}]]
 
@@ -69,7 +70,6 @@
                                :services {:scheduler {:active-schedules (scheduler-service/current-schedules)}}}})}}]
 
     ["/services"
-
      ["/scheduler"
       {:post {:parameters {:body {:action string?}}
               :handler (fn [request]
@@ -83,6 +83,19 @@
 
                            {:code 200
                             :body {:msg (str "Performed syncer " action)}}))}}]]
+
+    ["/sync"
+     ["/force"
+      {:post {:parameters {:body {:model string?}}
+              :handler (fn [request]
+                         (let [model (-> request :parameters :body :model)]
+                           (case model
+                             "item" (item-syncer/force-sync-all-items)
+                             "company" (company-syncer/force-sync-all-companies)
+                             (throw+ {:what :missing-model
+                                      :msk (str "No model found matching " model)}))
+                           {:code 200
+                            :body {:msg (str "Performed force sync for " model)}}))}}]]
 
     ["/health-check"
      {:get {:handler #'health/health-check}}]]

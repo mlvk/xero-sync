@@ -45,6 +45,8 @@
 
 (defn force-sync-all-companies
   []
+  (log/info {:what "Sync"
+             :msg "Starting force sync all companies"})
   (let [all-active-companies (gr/get-records :companies)
         ids (map :id all-active-companies)]
 

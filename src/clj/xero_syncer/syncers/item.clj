@@ -43,6 +43,8 @@
 
 (defn force-sync-all-items
   []
+  (log/info {:what "Sync"
+             :msg "Starting force sync all items"})
   (let [all-active-items (gr/get-records :items :where [:= :t.active true])
         ids (map :id all-active-items)]
 
