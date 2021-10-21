@@ -4,12 +4,17 @@
             [reitit.ring.middleware.multipart :as multipart]
             [reitit.ring.middleware.muuntaja :as muuntaja]
             [xero-syncer.utils.health-checks :as health]
+            [xero-syncer.services.scheduler :as scheduler-service]
+            [xero-syncer.services.syncer :as syncer-service]
             [clojure.pprint :refer [pprint]]
             [reitit.ring.middleware.parameters :as parameters]
             [reitit.swagger :as swagger]
+            [xero-syncer.middleware.logger :as logger]
+            [slingshot.slingshot :refer [throw+ try+]]
             [xero-syncer.db.core :as db]
             [reitit.swagger-ui :as swagger-ui]
             [ring.util.http-response :refer :all]
+            [xero-syncer.middleware.auth :as auth]
             [xero-syncer.middleware.formats :as formats]
             [xero-syncer.services.xero :as xero]))
 
@@ -33,7 +38,12 @@
                  ;; coercing request parameters
                  coercion/coerce-request-middleware
                  ;; multipart
-                 multipart/multipart-middleware]}
+                 multipart/multipart-middleware
+                 ;;  Auth
+                 auth/wrap-api-key-authorized-middleware
+                 ;;  Logging
+                 logger/wrap-logger-middleware]
+    :parameters {:header {:x-api-key string?}}}
 
    ;; swagger documentation
    ["" {:no-doc true
@@ -51,6 +61,26 @@
    ["/ping"
     {:get (constantly (ok {:message "pong"}))}]
 
+   ["/status"
+    {:get {:handler (fn [_]
+                      {:code 200
+                       :body {:xero (xero/health-check)
+                              :services {:scheduler {:active-schedules (scheduler-service/current-schedules)}}}})}}]
+
+   ["/services"
+    ["/scheduler"
+     {:post {:parameters {:body {:action string?}}
+             :handler (fn [request]
+                        (let [action (-> request :parameters :body :action)]
+                          (case action
+                            "start" (syncer-service/start-schedules)
+                            "stop" (syncer-service/stop-schedules)
+                            "restart" (syncer-service/restart-schedules)
+                            (throw+ {:what :missing-action
+                                     :msk (str "No action found matching " action)}))
+
+                          {:code 200
+                           :body {:msg (str "Performed syncer " action)}}))}}]]
    ["/health-check"
     {:get {:handler #'health/health-check}}]
 

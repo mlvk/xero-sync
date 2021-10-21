@@ -1,5 +1,6 @@
 SELECT
     o.id order_id,
+    o.*,
     count(oi.id) total_line_items
 FROM
     orders o
@@ -7,8 +8,7 @@ FROM
 WHERE
     o.sync_state = 0
     AND o.published_state = 1
-    AND o.order_type = 'sales-order'
 GROUP BY
     o.id
 HAVING
-    count(oi.id) = 0
+    count(oi.id) > 0

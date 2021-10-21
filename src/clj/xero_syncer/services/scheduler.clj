@@ -86,6 +86,10 @@
   (doseq [schedule @schedules]
     (stop-schedule (:id schedule))))
 
+(defn current-schedules
+  []
+  (map #(select-keys % [:id :name :frequency]) @schedules))
+
 (comment
   (create-schedule
    :handler (fn [time] (tap> time))
