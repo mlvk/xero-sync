@@ -102,7 +102,4 @@
 
    "
   [table id props]
-  (log/info {:what "Update"
-             :table table
-             :msg (str "Successfully updated record with id: " id)})
   (db/execute-one! (update-record-sql table id props)))

@@ -1,6 +1,8 @@
 (ns xero-syncer.models.local.company
   (:require [xero-syncer.db.core :as db]
             [xero-syncer.models.local.generic-record :as gr]
+            [clojure.tools.logging :as log]
+            [slingshot.slingshot :refer [try+]]
             [honey.sql :as hs]
             [honey.sql.helpers :as hh]))
 
@@ -44,7 +46,6 @@
         company-name (:Name remote-data)
         local-record (or
                       (get-company-by-name company-name)
-                      (gr/get-record-by-xero-id :companies xero-id)
                       (gr/get-record-by-id :companies origin-id))
         local-record-id (:id local-record)
         has-local-record? (boolean local-record)
@@ -52,4 +53,9 @@
                     :name (:Name remote-data)}]
 
     (when has-local-record?
-      (gr/update-record! :companies local-record-id change-set))))
+      (try+
+       (gr/update-record! :companies local-record-id change-set)
+       (catch org.postgresql.util.PSQLException pe (log/error {:what :pg-error
+                                                               :error (.getServerErrorMessage pe)
+                                                               :remote-data remote-data
+                                                               :local-record local-record}))))))

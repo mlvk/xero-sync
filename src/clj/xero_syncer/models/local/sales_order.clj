@@ -1,5 +1,7 @@
 (ns xero-syncer.models.local.sales-order
   (:require [xero-syncer.db.core :as db]
+            [slingshot.slingshot :refer [try+]]
+            [clojure.tools.logging :as log]
             [next.jdbc.date-time]
             [honey.sql :as hs]
             [xero-syncer.models.local.order :as lo]
@@ -64,7 +66,6 @@
         order-number (:InvoiceNumber remote-data)
         local-record (or
                       (lo/get-order-by-order-number order-number)
-                      (gr/get-record-by-xero-id :orders xero-id)
                       (gr/get-record-by-id :orders origin-id))
         local-record-id (:id local-record)
         has-local-record? (boolean local-record)
@@ -72,4 +73,10 @@
                     :order_number order-number}]
 
     (when has-local-record?
-      (gr/update-record! :orders local-record-id change-set))))
+      (try+
+       (gr/update-record! :orders local-record-id change-set)
+       (catch org.postgresql.util.PSQLException pe (log/error {:what :pg-error
+                                                               :error (.getServerErrorMessage pe)
+                                                               :remote-data remote-data
+                                                               :local-record local-record}))))))
+

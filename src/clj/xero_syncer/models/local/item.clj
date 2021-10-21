@@ -1,6 +1,8 @@
 (ns xero-syncer.models.local.item
   (:require [xero-syncer.db.core :as db]
             [xero-syncer.models.local.generic-record :as gr]
+            [slingshot.slingshot :refer [try+]]
+            [clojure.tools.logging :as log]
             [honey.sql :as hs]
             [honey.sql.helpers :as hh]))
 
@@ -49,20 +51,20 @@
   (let [xero-code (:Code remote-data)
         xero-name (:Name remote-data)
         xero-id (:ItemID remote-data)
-        local-item (or
-                    (get-item-by-code xero-code)
-                    (get-item-by-name xero-name)
-                    (gr/get-record-by-xero-id :items xero-id)
-                    (gr/get-record-by-id :companies origin-id))
-        local-item-id (:id local-item)
-        has-local-item? (boolean local-item)
-        update-fields {:code xero-code
-                       :xero_id xero-id
-                       :name xero-name}]
+        local-record (or
+                      (get-item-by-code xero-code)
+                      (get-item-by-name xero-name)
+                      (gr/get-record-by-id :companies origin-id))
+        local-record-id (:id local-record)
+        has-local-record? (boolean local-record)
+        change-set {:code xero-code
+                    :xero_id xero-id
+                    :name xero-name}]
 
-    (tap> {:remote-data remote-data
-           :local-item-id local-item-id
-           :update-fields update-fields})
-
-    (when has-local-item?
-      (gr/update-record! :items local-item-id update-fields))))
+    (when has-local-record?
+      (try+
+       (gr/update-record! :items local-record-id change-set)
+       (catch org.postgresql.util.PSQLException pe (log/error {:what :pg-error
+                                                               :error (.getServerErrorMessage pe)
+                                                               :remote-data remote-data
+                                                               :local-record local-record}))))))
