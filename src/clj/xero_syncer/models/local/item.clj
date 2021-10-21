@@ -51,20 +51,12 @@
   (let [xero-code (:Code remote-data)
         xero-name (:Name remote-data)
         xero-id (:ItemID remote-data)
-        local-record (or
-                      (get-item-by-code xero-code)
-                      (get-item-by-name xero-name)
-                      (gr/get-record-by-id :companies origin-id))
-        local-record-id (:id local-record)
-        has-local-record? (boolean local-record)
+        maybe-local-record (or
+                            (get-item-by-code xero-code)
+                            (get-item-by-name xero-name)
+                            (gr/get-record-by-id :companies origin-id))
         change-set {:code xero-code
                     :xero_id xero-id
                     :name xero-name}]
 
-    (when has-local-record?
-      (try+
-       (gr/update-record! :items local-record-id change-set)
-       (catch org.postgresql.util.PSQLException pe (log/error {:what :pg-error
-                                                               :error (.getServerErrorMessage pe)
-                                                               :remote-data remote-data
-                                                               :local-record local-record}))))))
+    (gr/merge-remote-response->local :orders maybe-local-record remote-data change-set)))

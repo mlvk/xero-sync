@@ -1,6 +1,8 @@
 (ns xero-syncer.models.local.generic-record
   (:require [xero-syncer.db.core :as db]
             [honey.sql :as hs]
+            [slingshot.slingshot :refer [try+]]
+
             [clojure.tools.logging :as log]
             [honey.sql.helpers :as hh]))
 
@@ -103,3 +105,29 @@
    "
   [table id props]
   (db/execute-one! (update-record-sql table id props)))
+
+(defn merge-remote-response->local
+  "Attempts to merge remote data to a local match
+   
+   Args
+   1. table - The table to set changes on
+   2. local-record - The record that will be updated
+   3. remote-data - The remote data used to build the change-set
+   4. change-set - The actual data that will attempt to be merge to the local record
+
+   Example: (merge-remote-response->local :orders {:id 1} {'InvoiceID' 'new-xero-id-001'} {:xero_id 'new-xero-id-001'})
+   "
+  [table local-record remote-data change-set]
+  (let [local-record-id (:id local-record)
+        has-local-record? (boolean local-record)]
+    (if has-local-record?
+      (try+
+       (update-record! table local-record-id change-set)
+       (catch org.postgresql.util.PSQLException pe (log/error {:what :pg-error
+                                                               :error (.getServerErrorMessage pe)
+                                                               :remote-data remote-data
+                                                               :local-record local-record})))
+      (log/warn {:what :sync
+                 :msg "No local item found, skipping upstream sync"
+                 :remote-data remote-data
+                 :local-record local-record}))))
