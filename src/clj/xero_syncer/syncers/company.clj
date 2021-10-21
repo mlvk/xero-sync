@@ -23,7 +23,7 @@
       (let [match-local (lc/remote->local! {:remote-data r})]
         (when match-local
           (gr/mark-record-synced! :companies (:id match-local))
-          (log/info {:what "Sync status"
+          (log/info {:what :sync
                      :direction :local->remote
                      :msg (str "Successfully synced company with id: " (:id match-local))}))))))
 
@@ -45,7 +45,7 @@
 
 (defn force-sync-all-companies
   []
-  (log/info {:what "Sync"
+  (log/info {:what :sync
              :msg "Starting force sync all companies"})
   (let [all-active-companies (gr/get-records :companies)
         ids (map :id all-active-companies)]

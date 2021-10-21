@@ -20,7 +20,6 @@
 
 (mount/defstate ^{:on-reload :noop} schedules
   :start (do
-           (println "!!!!!!!! Schedules")
            (log/info {:what :service
                       :msg "Starting all schedules"})
            (create-schedules!))

@@ -7,39 +7,10 @@
             [tick.core :as t]
             [xero-syncer.config :refer [env]]
             [xero-syncer.models.local.company :as lc]
-            [xero-syncer.models.local.generic-record :as gr]
             [xero-syncer.models.local.order :as lo]
             [xero-syncer.services.xero :as xero]))
 
 (def xero-invoices-endpoint "https://api.xero.com/api.xro/2.0/Invoices/")
-
-(defn find-invoice-by-xero-id
-  [xero-id]
-  (try+ (-> (client/get (str xero-invoices-endpoint (or xero-id "FORCE-XERO-NIL"))
-                        {:headers (xero/generate-auth-headers)
-                         :accept :json})
-            :body
-            (parse-string true)
-            :Invoices
-            (first))
-        (catch [:status 403] error (log/error {:what "Couldn't find invoice by xero-id"
-                                               :error error}))
-        (catch [:status 404] error (log/error {:what "Couldn't find invoice by xero-id"
-                                               :error error}))))
-
-(defn find-invoice-by-invoice-number
-  [invoice-number]
-  (try+ (-> (client/get (str xero-invoices-endpoint (or invoice-number "FORCE-XERO-NIL"))
-                        {:headers (xero/generate-auth-headers)
-                         :accept :json})
-            :body
-            (parse-string true)
-            :Invoices
-            (first))
-        (catch [:status 403] error (log/error {:what "Couldn't find invoice by invoice-number"
-                                               :error error}))
-        (catch [:status 404] error (log/error {:what "Couldn't find invoice by invoice-number"
-                                               :error error}))))
 
 (defn- calc-due-date
   [start-date terms]
@@ -82,47 +53,6 @@
      "DueDate" due-date-formatted
      "Status" "SUBMITTED"}))
 
-(defn update-invoice!
-  "Update an invoice in xero based on local order data"
-  [local-order-data xero-invoice-id]
-  (let [body (generate-string (local-order->xero-invoice-payload local-order-data))
-        payload {:headers (xero/generate-auth-headers)
-                 :accept :json
-                 :body body}]
-
-    (try+
-     (-> (client/post (str xero-invoices-endpoint xero-invoice-id)
-                      payload)
-         :body
-         (parse-string true)
-         :Invoices
-         (first))
-     (catch [:status 403] error (log/error {:what "Couldn't update invoice"
-                                            :error error}))
-     (catch [:status 404] error (log/error {:what "Couldn't update invoice"
-                                            :error error}))
-     (catch [:status 400] error (log/error {:what "Couldn't update invoice"
-                                            :error error})))))
-
-(defn create-invoice!
-  "Create a new invoice in xero based on local order data"
-  [local-order-data]
-  (let [body (generate-string (local-order->xero-invoice-payload local-order-data))
-        payload {:headers (xero/generate-auth-headers)
-                 :accept :json
-                 :body body}]
-    (try+
-     (-> (client/put (str xero-invoices-endpoint)
-                     payload)
-         :body
-         (parse-string true)
-         :Invoices
-         (first))
-     (catch [:status 404] error (log/error {:what "Couldn't create invoice"
-                                            :error error}))
-     (catch [:status 400] error (log/error {:what "Couldn't create invoice"
-                                            :error error})))))
-
 (defn upsert-invoices!
   "Update invoices in xero based on local sales-order data"
   [sales-orders]
@@ -136,21 +66,12 @@
          :body
          (parse-string true)
          :Invoices)
-     (catch [:status 403] error (log/error {:what "Couldn't update invoice"
+     (catch [:status 403] error (log/error {:what :xero
+                                            :msg "Forbidden, cannot access this resource"
                                             :error error}))
-     (catch [:status 404] error (log/error {:what "Couldn't update invoice"
+     (catch [:status 404] error (log/error {:what :xero
+                                            :msg "Couldn't find resource"
                                             :error error}))
-     (catch [:status 400] error (log/error {:what "Couldn't update invoice"
+     (catch [:status 400] error (log/error {:what "Unknown error"
                                             :error error})))))
 
-(defn sync-local->remote!
-  [local-record-data]
-
-  (let [matched-record (or (find-invoice-by-xero-id (:xero_id local-record-data))
-                           (find-invoice-by-invoice-number (:order_number local-record-data)))
-        has-match? (boolean matched-record)
-        remote-xero-id (:InvoiceNumber matched-record)]
-
-    (if has-match?
-      (update-invoice! local-record-data remote-xero-id)
-      (create-invoice! local-record-data))))

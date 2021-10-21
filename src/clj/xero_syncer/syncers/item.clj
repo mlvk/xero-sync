@@ -22,7 +22,7 @@
       (let [match-local (li/remote->local! {:remote-data r})]
         (when match-local
           (gr/mark-record-synced! :items (:id match-local))
-          (log/info {:what "Sync status"
+          (log/info {:what :sync
                      :direction :local->remote
                      :msg (str "Successfully synced item with id: " (:id match-local))}))))))
 
@@ -43,7 +43,7 @@
 
 (defn force-sync-all-items
   []
-  (log/info {:what "Sync"
+  (log/info {:what :sync
              :msg "Starting force sync all items"})
   (let [all-active-items (gr/get-records :items)
         ids (map :id all-active-items)]

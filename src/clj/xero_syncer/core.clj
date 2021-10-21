@@ -68,7 +68,7 @@
   (if (env-validator/is-valid? env)
     (start-app args)
     (do
-      (log/error {:what :init
+      (log/error {:what :core
                   :msg (env-validator/explain env)})
       (System/exit 1))))
 

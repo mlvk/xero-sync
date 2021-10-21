@@ -78,7 +78,7 @@
                              "start" (syncer-service/start-schedules)
                              "stop" (syncer-service/stop-schedules)
                              "restart" (syncer-service/restart-schedules)
-                             (throw+ {:what :missing-action
+                             (throw+ {:what :api-error
                                       :msk (str "No action found matching " action)}))
 
                            {:code 200
@@ -92,7 +92,7 @@
                            (case model
                              "item" (item-syncer/force-sync-all-items)
                              "company" (company-syncer/force-sync-all-companies)
-                             (throw+ {:what :missing-model
+                             (throw+ {:what :api-error
                                       :msk (str "No model found matching " model)}))
                            {:code 200
                             :body {:msg (str "Performed force sync for " model)}}))}}]]

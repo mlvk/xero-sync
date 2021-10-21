@@ -22,7 +22,7 @@
       (let [match-local (lso/remote->local! {:remote-data r})]
         (when match-local
           (gr/mark-record-synced! :orders (:id match-local))
-          (log/info {:what "Sync status"
+          (log/info {:what :sync
                      :direction :local->remote
                      :msg (str "Successfully synced sales order with id: " (:id match-local))}))))))
 

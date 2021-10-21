@@ -91,10 +91,10 @@
                     :accept :json})
                   :body)]
       (persist-access-data! res)
-      (log/info {:what "Access token refresh"
+      (log/info {:what :xero
                  :msg "Access token was refreshed successfully"}))
-    (log/warn {:what "Missing access-data"
-               :msg "No access data found. User must first log in through xero."})))
+    (log/error {:what :xero
+                :msg "No access data found. User must first log in through xero."})))
 
 (defn access-token-time-remaining
   "What is the remaining time in seconds for the provided access token"
@@ -157,7 +157,7 @@
                   :accept :json})
                 :body)]
 
-    (log/info {:what "Code token swap"
+    (log/info {:what :xero
                :msg "Code was successfully swapped for access data"})
     (persist-access-data! res)))
 
@@ -169,10 +169,10 @@
                                :accept :json})
                   :body
                   (parse-string true))]
-      (log/info {:what "Connection data"
+      (log/info {:what :xero
                  :msg "Connection data refreshed successfully"})
       (persist-connection-data! res))
-    (throw+ {:what "No access data"
+    (throw+ {:what :xero
              :msg "You must have access data before requesting connectin data"})))
 
 (defn refresh-access-data!
