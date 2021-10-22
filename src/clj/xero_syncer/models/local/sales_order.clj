@@ -33,10 +33,12 @@
                  [[:count :oi.id] :total_line_items])
       (hh/from [:orders :o])
       (hh/left-join [:order_items :oi] [:= :o.id :oi.order_id])
+      (hh/join [:fulfillments :f] [:= :o.id :f.order_id])
       (hh/where [:and
                  [:= :o.sync_state 0]
                  [:= :o.order_type "sales-order"]
-                 [:= :o.published_state 1]])
+                 [:= :o.published_state 1]
+                 [:= :f.delivery_state 1]])
       (hh/group-by :o.id)
       (hh/having [:> [:count :oi.id] 0])))
 
@@ -48,17 +50,18 @@
   (-> (hh/select [:o.id :id])
       (hh/from [:orders :o])
       (hh/left-join [:order_items :oi] [:= :o.id :oi.order_id])
+      (hh/join [:fulfillments :f] [:= :o.id :f.order_id])
       (hh/where [:and
                  [:= :o.sync_state 0]
                  [:= :o.order_type "sales-order"]
-                 [:= :o.published_state 1]])
+                 [:= :o.published_state 1]
+                 [:= :f.delivery_state 1]])
       (hh/group-by :o.id)
       (hh/having [:> [:count :oi.id] 0])
       (hh/limit limit)))
 
 (defn get-ready-to-sync-sales-orders-ids [& {:keys [limit]
                                              :or {limit 200}}] (map :id (db/execute! (#'get-ready-to-sync-sales-orders-ids-sql :limit limit))))
-
 
 (defn remote->local!
   "Sync a xero invoice order to order"
