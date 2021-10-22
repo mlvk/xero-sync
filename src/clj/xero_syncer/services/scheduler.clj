@@ -90,6 +90,10 @@
   []
   (map #(select-keys % [:id :name :frequency]) @schedules))
 
+(defn healthy?
+  []
+  (boolean (seq @schedules)))
+
 (comment
   (create-schedule
    :handler (fn [time] (tap> time))

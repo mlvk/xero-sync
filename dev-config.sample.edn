@@ -1,0 +1,40 @@
+;; WARNING!
+;; This is a sample config and should not store any specific data, even dev, as it is version controlled.
+
+{:dev true
+ :port 3000
+ ;; when :nrepl-port is set the application starts the nREPL server on load
+ :nrepl-port 7000
+
+;;  Postgres - Connection info
+ :db {:name     "postgres"
+      :user     "postgres"
+      :password "postgres"
+      :host     "localhost"
+      :port     5432}
+
+;; Xero - Connection info
+ :xero {;;    OAuth callback, needs to match an option set in xero dev app center
+        :oauth-callback-uri "http://localhost:3000/api/oauth"
+
+        ;;    Found in the xero app portal
+        :client-id          "CLIENT-ID"
+
+        ;;    Found in the xero app portal
+        :client-secret      "CLIENT-SECRET"
+
+        ;;    This will be the only tenant that attempts to be accessed
+        :tenant-name        "Demo Company (US)"}
+
+;;  Xero accounting - Connection info
+ :accounting {:default-cogs-account 500
+              :default-sales-account 400}
+
+;;  Rabbit MQ - Connection info
+ :cloudamqp-url "amqps://guest:guest@localhost:5672"
+
+;;  Endpoint access
+ :api-key "secret"
+
+;;  
+ }

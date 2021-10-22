@@ -2,6 +2,7 @@
   (:require [clojure.tools.logging :as log]
             [xero-syncer.constants.topics :as topics]
             [xero-syncer.models.local.company :as lc]
+            [xero-syncer.syncers.generic-syncer :as gs]
             [xero-syncer.models.local.generic-record :as gr]
             [xero-syncer.models.remote.contact :as rc]
             [xero-syncer.services.rabbit-mq :as mq]))
@@ -17,13 +18,7 @@
   (let [companies (gr/get-record-by-ids :companies (:ids data))
         results (rc/upsert-contacts! companies)]
 
-    (doseq [r results]
-      (let [match-local (lc/remote->local! {:remote-data r})]
-        (when match-local
-          (gr/mark-record-synced! :companies (:id match-local))
-          (log/info {:what :sync
-                     :direction :local->remote
-                     :msg (str "Successfully synced company with id: " (:id match-local))}))))))
+    (gs/merge-back-remote->local! results lc/remote->local!)))
 
 (defn queue-ready-to-sync-companies
   "Check for unsynced local companies Pushes results to rabbit mq local->remote queue

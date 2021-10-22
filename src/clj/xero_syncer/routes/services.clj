@@ -56,21 +56,26 @@
             {:url "/api/swagger.json"
              :config {:validator-url nil}})}]]
 
+   ["/health-check"
+
+    {:swagger {:tags ["misc"]}
+     :get {:handler #'health/health-check}}]
+
    ["/p"
     {:parameters {:header {:x-api-key string?}}
      :middleware [auth/wrap-api-key-authorized-middleware]}
-    ["/ping"
-     {:get (constantly (ok {:message "pong"}))}]
 
     ["/status"
-     {:get {:handler (fn [_]
+     {:swagger {:tags ["status"]}
+      :get {:handler (fn [_]
                        {:code 200
-                        :body {:xero (xero/health-check)
+                        :body {:xero (xero/status-info)
                                :services {:scheduler {:active-schedules (scheduler-service/current-schedules)}}}})}}]
 
     ["/services"
      ["/scheduler"
-      {:post {:parameters {:body {:action string?}}
+      {:swagger {:tags ["services"]}
+       :post {:parameters {:body {:action string?}}
               :handler (fn [request]
                          (let [action (-> request :parameters :body :action)]
                            (case action
@@ -85,7 +90,8 @@
 
     ["/sync"
      ["/items"
-      {:post {:parameters {:body {:ids vector?}}
+      {:swagger {:tags ["sync"]}
+       :post {:parameters {:body {:ids vector?}}
               :handler (fn [request]
                          (let [ids (-> request :parameters :body :ids)]
                            (item-syncer/force-sync-items ids)
@@ -93,7 +99,8 @@
                             :body {:msg (str "Performed force sync for items " ids)}}))}}]
 
      ["/companies"
-      {:post {:parameters {:body {:ids vector?}}
+      {:swagger {:tags ["sync"]}
+       :post {:parameters {:body {:ids vector?}}
               :handler (fn [request]
                          (let [ids (-> request :parameters :body :ids)]
                            (company-syncer/force-sync-companies ids)
@@ -101,7 +108,8 @@
                             :body {:msg (str "Performed force sync for companies " ids)}}))}}]
 
      ["/sales-orders"
-      {:post {:parameters {:body {:ids vector?}}
+      {:swagger {:tags ["sync"]}
+       :post {:parameters {:body {:ids vector?}}
               :handler (fn [request]
                          (let [ids (-> request :parameters :body :ids)]
                            (sales-order-syncer/force-sync-sales-orders ids)
@@ -109,7 +117,8 @@
                             :body {:msg (str "Performed force sync for companies " ids)}}))}}]
 
      ["/batch"
-      {:post {:parameters {:body {:model string?}}
+      {:swagger {:tags ["sync"]}
+       :post {:parameters {:body {:model string?}}
               :handler (fn [request]
                          (let [model (-> request :parameters :body :model)]
                            (case model
@@ -118,13 +127,11 @@
                              (throw+ {:what :api-error
                                       :msk (str "No model found matching " model)}))
                            {:code 200
-                            :body {:msg (str "Performed force sync for " model)}}))}}]]
-
-    ["/health-check"
-     {:get {:handler #'health/health-check}}]]
+                            :body {:msg (str "Performed force sync for " model)}}))}}]]]
 
    ["/oauth"
-    {:get {:handler (fn [{:keys [query-params]}]
+    {:swagger {:tags ["auth"]}
+     :get {:handler (fn [{:keys [query-params]}]
                       (let [code (get query-params "code")]
                         (xero/connect! code)
                         {:status 200

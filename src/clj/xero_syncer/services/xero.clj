@@ -192,11 +192,16 @@
   (reset! access-data nil)
   (reset! connection-data nil))
 
-(defn health-check
+(defn status-info
   []
   {:access-token-time-remaining (access-token-time-remaining @access-data)
    :connected-tenant-id (current-tenant-id)
    :connected-tenant-name (-> env :xero :tenant-name)})
+
+(defn healthy?
+  []
+  (boolean (and (> (access-token-time-remaining @access-data) 0)
+                (current-tenant-id))))
 
 (comment
 

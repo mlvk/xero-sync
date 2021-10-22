@@ -87,6 +87,12 @@
                    :queue local->remote-queue
                    :route-key "sync.local.*"}]))
 
+(defn healthy?
+  []
+  (boolean (and conn
+                chan
+                @consumers)))
+
 (comment
 
   (reset! consumers [])
