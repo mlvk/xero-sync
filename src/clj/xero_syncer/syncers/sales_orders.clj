@@ -27,8 +27,8 @@
                      :msg (str "Successfully synced sales order with id: " (:id match-local))}))))))
 
 
-(defn queue-ready-to-sync-sales-orders
-  "Check for unsynced local company. Pushes results to rabbit mq local->remote queue
+(defn queue-fulfilled-ready-to-sync-sales-orders
+  "Check for unsynced local sales order Pushes results to rabbit mq local->remote queue
    
    Args
 
@@ -37,10 +37,28 @@
    "
   [& {:keys [chunk-size]
       :or {chunk-size 50}}]
-  (let [ready-to-sync-sales-order-ids (lso/get-ready-to-sync-sales-orders-ids :limit chunk-size)]
+  (let [ready-to-sync-sales-order-ids (lso/get-fulfilled-ready-to-sync-sales-orders-ids :limit chunk-size)]
     (when (seq ready-to-sync-sales-order-ids)
       (mq/publish :topic topics/sync-local-sales-order :payload {:type :sales-order
                                                                  :data {:ids ready-to-sync-sales-order-ids}}))))
+
+(defn queue-unfulfilled-ready-to-sync-sales-orders
+  "Check for unsynced local sales order Pushes results to rabbit mq local->remote queue
+   
+   Args
+
+   Optional
+   1. chunk-size - Int - How many invoices to grab at once
+   "
+  [& {:keys [chunk-size]
+      :or {chunk-size 50}}]
+  (let [unfulfilled-ready-to-sync-sales-order-ids (lso/get-unfulfilled-ready-to-sync-sales-orders-ids :limit chunk-size)]
+    (when (seq unfulfilled-ready-to-sync-sales-order-ids)
+      (mq/publish :topic topics/sync-local-sales-order :payload {:type :sales-order
+                                                                 :data {:ids unfulfilled-ready-to-sync-sales-order-ids}}))))
+
+
+
 
 
 #_(gr/get-record-by-ids :orders (lso/get-ready-to-sync-sales-orders-ids :limit 10))

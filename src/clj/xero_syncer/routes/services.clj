@@ -8,6 +8,7 @@
             [xero-syncer.services.syncer :as syncer-service]
             [clojure.pprint :refer [pprint]]
             [xero-syncer.syncers.item :as item-syncer]
+            [xero-syncer.models.local.generic-record :as gr]
             [xero-syncer.syncers.company :as company-syncer]
             [reitit.ring.middleware.parameters :as parameters]
             [reitit.swagger :as swagger]
@@ -85,7 +86,23 @@
                             :body {:msg (str "Performed syncer " action)}}))}}]]
 
     ["/sync"
-     ["/force"
+     ["/items"
+      {:post {:parameters {:body {:ids vector?}}
+              :handler (fn [request]
+                         (let [ids (-> request :parameters :body :ids)]
+                           (item-syncer/force-sync-items ids)
+                           {:code 200
+                            :body {:msg (str "Performed force sync for items " ids)}}))}}]
+
+     ["/companies"
+      {:post {:parameters {:body {:ids vector?}}
+              :handler (fn [request]
+                         (let [ids (-> request :parameters :body :ids)]
+                           (company-syncer/force-sync-companies ids)
+                           {:code 200
+                            :body {:msg (str "Performed force sync for companies " ids)}}))}}]
+
+     ["/batch"
       {:post {:parameters {:body {:model string?}}
               :handler (fn [request]
                          (let [model (-> request :parameters :body :model)]

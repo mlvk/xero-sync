@@ -51,6 +51,13 @@
     (mq/publish :topic topics/sync-local-item :payload {:type :item
                                                         :data {:ids ids}})))
 
+(defn force-sync-items
+  [ids]
+  (log/info {:what :sync
+             :msg "Starting force items"})
+  (mq/publish :topic topics/sync-local-item :payload {:type :item
+                                                      :data {:ids ids}}))
+
 
 
 #_(mq/publish :topic topics/sync-local-item :payload {:type :item

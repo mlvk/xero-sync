@@ -53,6 +53,13 @@
     (mq/publish :topic topics/sync-local-company :payload {:type :company
                                                            :data {:ids ids}})))
 
+(defn force-sync-companies
+  [ids]
+  (log/info {:what :sync
+             :msg "Starting force companies"})
+  (mq/publish :topic topics/sync-local-item :payload {:type :company
+                                                      :data {:ids ids}}))
+
 #_(force-sync-all-companies)
 
 #_(batch-local->remote {:data {:ids (map #(:id %) (gr/get-records :companies))}})

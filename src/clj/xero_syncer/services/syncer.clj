@@ -44,17 +44,22 @@
   [(scheduler/create-schedule
     :name "Check for unsynced local items"
     :handler #'item-syncer/queue-ready-to-sync-items
-    :frequency (t/new-duration 10 :seconds))
+    :frequency (t/new-duration 1 :minutes))
 
    (scheduler/create-schedule
     :name "Check for unsynced local companies"
     :handler #'company-syncer/queue-ready-to-sync-companies
-    :frequency (t/new-duration 10 :seconds))
+    :frequency (t/new-duration 1 :minutes))
 
    (scheduler/create-schedule
     :name "Check for unsynced sales orders"
-    :handler #'sales-order-syncer/queue-ready-to-sync-sales-orders
-    :frequency (t/new-duration 1 :minutes))
+    :handler #'sales-order-syncer/queue-fulfilled-ready-to-sync-sales-orders
+    :frequency (t/new-duration 2 :minutes))
+
+   (scheduler/create-schedule
+    :name "Check for unsynced sales orders that are past the delivery date, but not marked fulfilled"
+    :handler #'sales-order-syncer/queue-unfulfilled-ready-to-sync-sales-orders
+    :frequency (t/new-duration 2 :minutes))
 
    (scheduler/create-schedule
     :name "Refresh access data"

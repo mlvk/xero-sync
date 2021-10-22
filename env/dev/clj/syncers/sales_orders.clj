@@ -37,7 +37,7 @@
 ;;   ======================
 
 ;;   Will run the batch check popping the first item and trying to sync
-  (sos/queue-ready-to-sync-sales-orders)
+  (sos/queue-fulfilled-ready-to-sync-sales-orders)
 
 ;;   Publish a specific sales order to the sync queue by id
   (mq/publish :topic topics/sync-local-sales-order :payload {:type :sales-order

@@ -8,7 +8,10 @@ FROM
 WHERE
     o.sync_state = 0
     AND o.published_state = 1
+    AND o.delivery_date <= now()
 GROUP BY
     o.id
 HAVING
     count(oi.id) > 0
+ORDER BY
+    o.delivery_date DESC
