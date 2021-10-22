@@ -1,12 +1,10 @@
 (ns xero-syncer.syncers.company
   (:require [clojure.tools.logging :as log]
             [xero-syncer.constants.topics :as topics]
-            [xero-syncer.models.local.generic-record :as gr]
             [xero-syncer.models.local.company :as lc]
+            [xero-syncer.models.local.generic-record :as gr]
             [xero-syncer.models.remote.contact :as rc]
             [xero-syncer.services.rabbit-mq :as mq]))
-
-
 
 (defn batch-local->remote!
   "Batch sync company to xero contact. 
@@ -56,9 +54,9 @@
 (defn force-sync-companies
   [ids]
   (log/info {:what :sync
-             :msg "Starting force companies"})
-  (mq/publish :topic topics/sync-local-item :payload {:type :company
-                                                      :data {:ids ids}}))
+             :msg "Starting force sync companies"})
+  (mq/publish :topic topics/sync-local-company :payload {:type :company
+                                                         :data {:ids ids}}))
 
 #_(force-sync-all-companies)
 

@@ -1,4 +1,4 @@
-(ns xero-syncer.syncers.sales-orders
+(ns xero-syncer.syncers.sales-order
   (:require [clojure.tools.logging :as log]
             [xero-syncer.constants.topics :as topics]
             [xero-syncer.models.local.generic-record :as gr]
@@ -58,7 +58,12 @@
                                                                  :data {:ids unfulfilled-ready-to-sync-sales-order-ids}}))))
 
 
-
+(defn force-sync-sales-orders
+  [ids]
+  (log/info {:what :sync
+             :msg "Starting force sync sales-orders"})
+  (mq/publish :topic topics/sync-local-sales-order :payload {:type :sales-order
+                                                             :data {:ids ids}}))
 
 
 #_(gr/get-record-by-ids :orders (lso/get-ready-to-sync-sales-orders-ids :limit 10))

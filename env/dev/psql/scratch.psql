@@ -1,6 +1,6 @@
 SELECT
-    *
+    c.id
 FROM
-    orders o
-WHERE
-    o.id = 48304
+    locations l
+    JOIN companies c ON c.id = l.company_id
+LIMIT 1

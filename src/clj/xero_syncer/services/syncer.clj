@@ -7,7 +7,7 @@
             [xero-syncer.services.xero :as xero]
             [xero-syncer.syncers.item :as item-syncer]
             [xero-syncer.syncers.company :as company-syncer]
-            [xero-syncer.syncers.sales-orders :as sales-order-syncer]))
+            [xero-syncer.syncers.sales-order :as sales-order-syncer]))
 
 (declare create-subscriptions! create-schedules!)
 

@@ -3,23 +3,21 @@
             [reitit.ring.coercion :as coercion]
             [reitit.ring.middleware.multipart :as multipart]
             [reitit.ring.middleware.muuntaja :as muuntaja]
-            [xero-syncer.utils.health-checks :as health]
-            [xero-syncer.services.scheduler :as scheduler-service]
-            [xero-syncer.services.syncer :as syncer-service]
-            [clojure.pprint :refer [pprint]]
-            [xero-syncer.syncers.item :as item-syncer]
-            [xero-syncer.models.local.generic-record :as gr]
-            [xero-syncer.syncers.company :as company-syncer]
             [reitit.ring.middleware.parameters :as parameters]
             [reitit.swagger :as swagger]
-            [xero-syncer.middleware.logger :as logger]
-            [slingshot.slingshot :refer [throw+ try+]]
-            [xero-syncer.db.core :as db]
             [reitit.swagger-ui :as swagger-ui]
             [ring.util.http-response :refer :all]
+            [slingshot.slingshot :refer [throw+]]
             [xero-syncer.middleware.auth :as auth]
             [xero-syncer.middleware.formats :as formats]
-            [xero-syncer.services.xero :as xero]))
+            [xero-syncer.middleware.logger :as logger]
+            [xero-syncer.services.scheduler :as scheduler-service]
+            [xero-syncer.services.syncer :as syncer-service]
+            [xero-syncer.services.xero :as xero]
+            [xero-syncer.syncers.company :as company-syncer]
+            [xero-syncer.syncers.item :as item-syncer]
+            [xero-syncer.syncers.sales-order :as sales-order-syncer]
+            [xero-syncer.utils.health-checks :as health]))
 
 (defn service-routes []
   ["/api"
@@ -99,6 +97,14 @@
               :handler (fn [request]
                          (let [ids (-> request :parameters :body :ids)]
                            (company-syncer/force-sync-companies ids)
+                           {:code 200
+                            :body {:msg (str "Performed force sync for companies " ids)}}))}}]
+
+     ["/sales-orders"
+      {:post {:parameters {:body {:ids vector?}}
+              :handler (fn [request]
+                         (let [ids (-> request :parameters :body :ids)]
+                           (sales-order-syncer/force-sync-sales-orders ids)
                            {:code 200
                             :body {:msg (str "Performed force sync for companies " ids)}}))}}]
 

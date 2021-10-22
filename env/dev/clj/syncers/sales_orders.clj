@@ -3,7 +3,7 @@
             [xero-syncer.models.local.generic-record :as gr]
             [xero-syncer.models.local.order :as lo]
             [xero-syncer.services.rabbit-mq :as mq]
-            [xero-syncer.syncers.sales-orders :as sos]))
+            [xero-syncer.syncers.sales-order :as sos]))
 
 (comment
 

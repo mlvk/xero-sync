@@ -5,6 +5,7 @@
             [ring.util.http-response :refer :all]
             [slingshot.slingshot :refer [try+]]
             [tick.core :as t]
+            [xero-syncer.models.local.location :as ll]
             [xero-syncer.config :refer [env]]
             [xero-syncer.models.local.company :as lc]
             [xero-syncer.models.local.order :as lo]
@@ -38,6 +39,9 @@
   [{:keys [id order_number delivery_date]}]
 
   (let [company (lc/get-company-by-order-id id)
+        company-id (:id company)
+        location (ll/get-location-by-company-id company-id)
+        location-code (:code location)
         due-date (calc-due-date delivery_date (:terms company))
         company-xero-id (:xero_id company)
         order-items (lo/get-order-items-by-order-id id)
@@ -47,6 +51,7 @@
 
     {"Type" "ACCREC"
      "InvoiceNumber" order_number
+     "Reference" location-code
      "Contact" {"ContactID" company-xero-id}
      "LineItems" line-items
      "Date" date-formatted
