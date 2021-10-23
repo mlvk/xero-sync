@@ -6,6 +6,7 @@
             [slingshot.slingshot :refer [try+]]
             [tick.core :as t]
             [xero-syncer.models.local.location :as ll]
+            [xero-syncer.models.local.generic-record :as gr]
             [xero-syncer.config :refer [env]]
             [xero-syncer.models.local.company :as lc]
             [xero-syncer.models.local.order :as lo]
@@ -20,14 +21,15 @@
 
 (defn- build-line-items-payload
   [order-items]
-  (for [oi order-items]
+  (for [oi order-items
+        :let [quantity (:order_item_quantity oi)]
+        :when (> quantity 0)]
     (let [unit-price (:order_item_unit_price oi)
           quantity (:order_item_quantity oi)
           line-amount (* unit-price quantity)
           item-code (:item_code oi)
           description (:item_description oi)
           account-code (-> env :accounting :default-sales-account)]
-
       {"ItemCode" item-code
        "Quantity" quantity
        "Description" description
@@ -35,8 +37,16 @@
        "LineAmount" line-amount
        "AccountCode" account-code})))
 
+(defn- build-shipping-fee
+  [shipping-fee]
+  {"Quantity" 1
+   "Description" "Shipping"
+   "UnitAmount" shipping-fee
+   "LineAmount" shipping-fee
+   "AccountCode" (-> env :accounting :shipping-revenue-account)})
+
 (defn- local-order->xero-invoice-payload
-  [{:keys [id order_number delivery_date]}]
+  [{:keys [id order_number delivery_date shipping]}]
 
   (let [company (lc/get-company-by-order-id id)
         company-id (:id company)
@@ -45,7 +55,10 @@
         due-date (calc-due-date delivery_date (:terms company))
         company-xero-id (:xero_id company)
         order-items (lo/get-order-items-by-order-id id)
-        line-items (build-line-items-payload order-items)
+        product-line-items (build-line-items-payload order-items)
+        has-shipping-fee? (> shipping 0)
+        shipping-line (build-shipping-fee shipping)
+        final-line-items (if has-shipping-fee? (conj (vec product-line-items) shipping-line) product-line-items)
         date-formatted (t/format "yyyy-MM-dd" delivery_date)
         due-date-formatted (t/format "yyyy-MM-dd" due-date)]
 
@@ -53,7 +66,7 @@
      "InvoiceNumber" order_number
      "Reference" location-code
      "Contact" {"ContactID" company-xero-id}
-     "LineItems" line-items
+     "LineItems" final-line-items
      "Date" date-formatted
      "DueDate" due-date-formatted
      "Status" "SUBMITTED"}))

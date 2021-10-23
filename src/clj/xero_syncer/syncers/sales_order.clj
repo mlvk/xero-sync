@@ -60,3 +60,9 @@
 #_(gr/get-record-by-ids :orders (lso/get-ready-to-sync-sales-orders-ids :limit 10))
 
 #_(queue-unfulfilled-ready-to-sync-sales-orders)
+
+#_(lso/get-fulfilled-ready-to-sync-sales-orders-ids)
+#_(lso/get-unfulfilled-ready-to-sync-sales-orders-ids)
+
+#_(mq/publish :topic topics/sync-local-sales-order :payload {:type :sales-order
+                                                             :data {:ids [48320]}})

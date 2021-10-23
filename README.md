@@ -9,6 +9,7 @@ https://developer.xero.com/app/manage
 ## Env vars
 
 Create dev-config.edn (or use dev-config.sample.edn). Add required env vars
+\*Env vars are run against a malli spec. Make sure to update `xero-syncer.specs.env` when changes env vars
 
 ```bash
 # Used to access the xero-syncer endpoints
@@ -19,6 +20,7 @@ export CLOUDAMQP_URL=amqps://guest:guest@localhost:5672
 # Xero accounting specifics
 export ACCOUNTING__DEFAULT_COGS_ACCOUNT=500
 export ACCOUNTING__DEFAULT_SALES_ACCOUNT=400
+export ACCOUNTING__SHIPPING_REVENUE_ACCOUNT=400
 
 # Xero app details
 export XERO__OAUTH_CALLBACK_URI=http://localhost:3000/api/oauth

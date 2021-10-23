@@ -19,7 +19,8 @@
 
    [:accounting [:map
                  [:default-cogs-account int?]
-                 [:default-sales-account int?]]]
+                 [:default-sales-account int?]
+                 [:shipping-revenue-account int?]]]
 
    [:cloudamqp-url string?]
 
