@@ -37,7 +37,7 @@
        "LineAmount" line-amount
        "AccountCode" account-code})))
 
-(defn- build-shipping-fee
+(defn- build-shipping-fee-line-item
   [shipping-fee]
   {"Quantity" 1
    "Description" "Shipping"
@@ -48,22 +48,34 @@
 (defn- local-order->xero-invoice-payload
   [{:keys [id order_number delivery_date shipping]}]
 
-  (let [company (lc/get-company-by-order-id id)
-        location (ll/get-location-by-order-id id)
-        location-code (:code location)
-        due-date (calc-due-date delivery_date (:terms company))
-        company-xero-id (:xero_id company)
+  (let [;; Queries
         order-items (lo/get-order-items-by-order-id id)
-        product-line-items (build-line-items-payload order-items)
+        company (lc/get-company-by-order-id id)
+        location (ll/get-location-by-order-id id)
+        address (gr/get-record-by-id :addresses (:address_id location))
+
+        ;; Extracted values
+        location-code (:code location)
+        city (:city address)
+        company-xero-id (:xero_id company)
+
+        ;; Flags
         has-shipping-fee? (> shipping 0)
-        shipping-line (build-shipping-fee shipping)
+
+        ;; Line item info
+        product-line-items (build-line-items-payload order-items)
+        shipping-line (build-shipping-fee-line-item shipping)
         final-line-items (if has-shipping-fee? (conj (vec product-line-items) shipping-line) product-line-items)
+
+        ;; Order info
+        order-reference (str location-code " - " city)
+        due-date (calc-due-date delivery_date (:terms company))
         date-formatted (t/format "yyyy-MM-dd" delivery_date)
         due-date-formatted (t/format "yyyy-MM-dd" due-date)]
 
     {"Type" "ACCREC"
      "InvoiceNumber" order_number
-     "Reference" location-code
+     "Reference" order-reference
      "Contact" {"ContactID" company-xero-id}
      "LineItems" final-line-items
      "Date" date-formatted
