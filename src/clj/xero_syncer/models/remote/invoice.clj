@@ -49,8 +49,7 @@
   [{:keys [id order_number delivery_date shipping]}]
 
   (let [company (lc/get-company-by-order-id id)
-        company-id (:id company)
-        location (ll/get-location-by-company-id company-id)
+        location (ll/get-location-by-order-id id)
         location-code (:code location)
         due-date (calc-due-date delivery_date (:terms company))
         company-xero-id (:xero_id company)
