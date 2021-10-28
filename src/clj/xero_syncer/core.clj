@@ -54,7 +54,7 @@
 (defn start-app [args]
   (let [parsed-args (parse-opts args cli-options)
         mounted-components (-> (mount/with-args parsed-args)
-                               #_(mount/except [#'xero-syncer.services.syncer/schedules])
+                               (mount/except [#'xero-syncer.services.syncer/schedules])
                                (mount/start)
                                :started)]
     (doseq [component mounted-components]
