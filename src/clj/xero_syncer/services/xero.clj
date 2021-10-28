@@ -27,8 +27,16 @@
 
 (declare refresh-access-data!)
 
-(defonce ^:private access-data (atom (read<-from-redis :auth-data)))
-(defonce ^:private connection-data (atom (read<-from-redis :connection-data)))
+#_(defonce ^:private access-data (atom (read<-from-redis :auth-data)))
+#_(defonce ^:private connection-data (atom (read<-from-redis :connection-data)))
+
+(mount/defstate ^{:on-reload :noop} access-data
+  :start (atom (read<-from-redis :auth-data)))
+
+(mount/defstate ^{:on-reload :noop} connection-data
+  :start (atom (read<-from-redis :connection-data)))
+
+
 (def xero-token-endpoint "https://identity.xero.com/connect/token")
 (def xero-connections-endpoint "https://api.xero.com/connections")
 
