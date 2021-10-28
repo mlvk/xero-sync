@@ -24,6 +24,8 @@
 
    [:cloudamqp-url string?]
 
+   [:redistogo-url string?]
+
    [:api-key string?]])
 
 (def env-validator
