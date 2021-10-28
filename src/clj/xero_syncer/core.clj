@@ -10,6 +10,7 @@
             [xero-syncer.services.scheduler]
             [xero-syncer.services.syncer]
             [xero-syncer.services.xero]
+            [clojure.edn :as edn]
             [xero-syncer.specs.env :as env-validator])
   (:gen-class))
 
@@ -53,7 +54,7 @@
 (defn start-app [args]
   (let [parsed-args (parse-opts args cli-options)
         mounted-components (-> (mount/with-args parsed-args)
-                               (mount/except [#'xero-syncer.services.syncer/schedules])
+                               #_(mount/except [#'xero-syncer.services.syncer/schedules])
                                (mount/start)
                                :started)]
     (doseq [component mounted-components]

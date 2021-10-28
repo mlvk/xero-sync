@@ -8,6 +8,8 @@
                  [tick "0.5.0-RC2"]
                  [conman "0.9.1"]
                  [cprop "0.1.19"]
+                 [com.taoensso/nippy "3.1.1"]
+                 [com.taoensso/carmine "3.1.0"]
                  [expound "0.8.9"]
                  [clj-http "3.12.3"]
                  [funcool/struct "1.4.0"]

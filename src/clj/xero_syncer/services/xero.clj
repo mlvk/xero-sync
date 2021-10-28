@@ -4,16 +4,31 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [cheshire.core :refer [generate-string parse-string]]
             [ring.util.http-response :refer :all]
+            [taoensso.carmine :as car :refer (wcar)]
             [clojure.tools.logging :as log]
+            [clojure.edn :as edn]
+            [mount.core :as mount]
             [postmortem.core :as pm]
+            [taoensso.nippy :as nippy]
             [tick.core :as t]
             [xero-syncer.config :refer [env]])
   (:import java.util.Base64))
 
+(def server-conn {:pool {} :spec {:uri (-> env :redistogo-url)}})
+
+(defn stash-to->redis
+  [key data]
+  (let [to-freeze (with-meta data {:created (t/now)})]
+    (car/wcar server-conn (car/set key to-freeze))))
+
+(defn read<-from-redis
+  [key]
+  (car/wcar server-conn (car/get key)))
+
 (declare refresh-access-data!)
 
-(defonce ^:private access-data (atom nil))
-(defonce ^:private connection-data (atom nil))
+(defonce ^:private access-data (atom (read<-from-redis :auth-data)))
+(defonce ^:private connection-data (atom (read<-from-redis :connection-data)))
 (def xero-token-endpoint "https://identity.xero.com/connect/token")
 (def xero-connections-endpoint "https://api.xero.com/connections")
 
@@ -27,12 +42,16 @@
 (defn- persist-access-data!
   "Persist the provided access data to local state"
   [data]
-  (reset! access-data (with-meta data {:created (t/now)})))
+  (let [prepped-auth-data (with-meta data {:created (t/now)})]
+    (stash-to->redis :auth-data prepped-auth-data)
+    (reset! access-data prepped-auth-data)))
 
 (defn- persist-connection-data!
   "Persist the provided connection data to local state"
   [data]
-  (reset! connection-data (with-meta data {:created (t/now)})))
+  (let [prepped-auth-data (with-meta data {:created (t/now)})]
+    (stash-to->redis :connection-data prepped-auth-data)
+    (reset! connection-data prepped-auth-data)))
 
 (defn- generate-basic-auth-header
   "Generate the auth header per this spec https://developer.xero.com/documentation/guides/oauth2/auth-flow/#3-exchange-the-code
