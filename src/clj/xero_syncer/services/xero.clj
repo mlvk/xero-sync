@@ -21,6 +21,8 @@
   (let [to-freeze (with-meta data {:created (t/now)})]
     (car/wcar server-conn (car/set key to-freeze))))
 
+(stash-to->redis "hi" {:asf 20})
+
 (defn read<-from-redis
   [key]
   (car/wcar server-conn (car/get key)))
