@@ -7,6 +7,9 @@
 
 (comment
 
+  (tap> (->> (gr/get-records :items)
+             (filter (fn [r] (= (:sync_state r) 0)))))
+
 ;;   ======================
 ;;   Pure
 ;;   ======================

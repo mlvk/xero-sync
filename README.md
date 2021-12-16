@@ -2,6 +2,10 @@
 
 [Login in locally](https://login.xero.com/identity/connect/authorize?response_type=code&client_id=E34D71D2195E4DB68159D3AF5C6B171B&redirect_uri=http://localhost:3000/api/oauth&scope=openid+profile+email+accounting.transactions+offline_access+accounting.reports.read+accounting.settings+accounting.contacts+files+assets)
 
+## Set up or reset demo company
+
+https://my.xero.com/!xkcD/Dashboard
+
 ## Set up app in xero
 
 https://developer.xero.com/app/manage
@@ -43,6 +47,8 @@ export NREPL_PORT=7000
 
 ## Start docker compose
 
+Make sure docker is running
+
 1. This will start rabbitmq and postgres
 
 ```bash
@@ -58,6 +64,12 @@ docker-compose up
 psql -U postgres -h localhost -p 5432 postgres < dump.sql
 ```
 
+Custom format dump
+
+```bash
+pg_restore -c --dbname=postgresql://postgres:postgres@localhost/postgres < dump.sql
+```
+
 Enter in password `postgres`
 
 ## Dev
@@ -66,6 +78,27 @@ RabbitMQ portal available at: http://localhost:15672/
 
 - Username: `guest`
 - Password: `guest`
+
+## Jack in
+
+Start a clojure repl using calva, `jack in` command
+
+## Start ngrok http
+
+```bash
+ngrok http 3000
+```
+
+## Start ngrok postgres
+
+```bash
+ngrok tcp 5432
+```
+
+## Retool
+
+1. Update the retool app staging resource url to ngrok http
+2. Update the retool pg staging resource connection info to ngrok tcp
 
 ## API docs
 
