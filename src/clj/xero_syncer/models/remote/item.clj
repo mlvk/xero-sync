@@ -3,7 +3,7 @@
             [clj-http.client :as client]
             [clojure.tools.logging :as log]
             [ring.util.http-response :refer :all]
-            [slingshot.slingshot :refer [try+]]
+            [slingshot.slingshot :refer [try+ throw+]]
             [xero-syncer.config :refer [env]]
             [xero-syncer.services.xero :as xero]))
 
@@ -29,24 +29,59 @@
     is_sold (assoc "SalesDetails" {"UnitPrice" default_price
                                    "AccountCode" (-> env :accounting :default-sales-account)})))
 
+(defn- has-status-attr-errors?
+  [record]
+  (= (:StatusAttributeString record) "ERROR"))
+
 (defn upsert-items!
   "Update items in xero based on local items data"
   [items]
   (let [body (generate-string {:Items (map local-item->xero-item-payload items)})
         payload {:headers (xero/generate-auth-headers)
                  :accept :json
-                 :body body}]
-    (try+
-     (-> (client/post (str xero-items-endpoint "?summarizeErrors=false")
-                      payload)
-         :body
-         (parse-string true)
-         :Items)
-     (catch [:status 403] error (log/error {:what :xero
-                                            :msg "Forbidden, cannot access this resource"
-                                            :error error}))
-     (catch [:status 404] error (log/error {:what :xero
-                                            :msg "Couldn't find resource"
-                                            :error error}))
-     (catch [:status 400] error (log/error {:what "Unknown error"
-                                            :error error})))))
+                 :body body}
+        results (try+
+                 (-> (client/post (str xero-items-endpoint "?summarizeErrors=false")
+                                  payload)
+                     :body
+                     (parse-string true)
+                     :Items)
+                 (catch [:status 403] error (log/error {:what :xero
+                                                        :msg "Forbidden, cannot access this resource"
+                                                        :error error}))
+                 (catch [:status 404] error (log/error {:what :xero
+                                                        :msg "Couldn't find resource"
+                                                        :error error}))
+                 (catch [:status 400] error (log/error {:what "Unknown error"
+                                                        :error error})))
+
+        has-errors? (some has-status-attr-errors? results)
+        errors (map (fn [r] (select-keys r [:ValidationErrors])) results)]
+
+
+    (if has-errors?
+      (do
+        (log/error {:what :item-sync
+                    :msg "There was an error syncing an item"
+                    :error errors})
+        nil)
+      results)))
+
+
+[{:SalesDetails          {:UnitPrice        0.0
+                          :AccountCode      "400"
+                          :ValidationErrors []}
+  :ItemID                "00000000-0000-0000-0000-000000000000"
+  :UpdatedDateUTC        "/Date(-62135596800000)/"
+  :IsSold                true
+  :IsTrackedAsInventory  false
+  :IsPurchased           true
+  :Code                  "MLVK-RIS-002"
+  :Name                  "Plant-based Sun-dried Tomato + Olive Quinoa Risotto"
+  :Description           "Creamy Cashew Risotto w/Sun-dried Tomatoes + Kalamata Olives"
+  :ValidationErrors      [{:Message "Inventory Item Name must not be more than than 50 characters long."}]
+  :PurchaseDescription   "Creamy Cashew Risotto w/Sun-dried Tomatoes + Kalamata Olives"
+  :StatusAttributeString "ERROR"
+  :PurchaseDetails       {:UnitPrice        0.0
+                          :AccountCode      "500"
+                          :ValidationErrors []}}]

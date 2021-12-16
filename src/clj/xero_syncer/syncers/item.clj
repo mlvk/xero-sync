@@ -53,7 +53,6 @@
                                                       :data {:ids ids}}))
 
 
-
 #_(mq/publish :topic topics/sync-local-item :payload {:type :item
                                                       :data {:ids [(li/get-item-by-code "r-016")]}})
 
@@ -63,3 +62,8 @@
 #_(force-sync-all-items)
 
 #_(gr/get-records :items :where [:= :t.active true])
+
+#_(li/get-ready-to-sync-item-ids :limit 1)
+;; => (398)
+
+#_(ri/upsert-items! (gr/get-record-by-ids :items [398]))
