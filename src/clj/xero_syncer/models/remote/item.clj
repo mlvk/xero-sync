@@ -66,22 +66,3 @@
                     :error errors})
         nil)
       results)))
-
-
-[{:SalesDetails          {:UnitPrice        0.0
-                          :AccountCode      "400"
-                          :ValidationErrors []}
-  :ItemID                "00000000-0000-0000-0000-000000000000"
-  :UpdatedDateUTC        "/Date(-62135596800000)/"
-  :IsSold                true
-  :IsTrackedAsInventory  false
-  :IsPurchased           true
-  :Code                  "MLVK-RIS-002"
-  :Name                  "Plant-based Sun-dried Tomato + Olive Quinoa Risotto"
-  :Description           "Creamy Cashew Risotto w/Sun-dried Tomatoes + Kalamata Olives"
-  :ValidationErrors      [{:Message "Inventory Item Name must not be more than than 50 characters long."}]
-  :PurchaseDescription   "Creamy Cashew Risotto w/Sun-dried Tomatoes + Kalamata Olives"
-  :StatusAttributeString "ERROR"
-  :PurchaseDetails       {:UnitPrice        0.0
-                          :AccountCode      "500"
-                          :ValidationErrors []}}]
