@@ -18,7 +18,10 @@
   [{:keys [data]}]
   (let [items (gr/get-record-by-ids :items (:ids data))
         results (ri/upsert-items! items)]
-    (gs/merge-back-remote->local! results li/remote->local!)))
+    (gs/merge-back-remote->local!
+     :table :items
+     :results results
+     :update-fn li/remote->local!)))
 
 (defn queue-ready-to-sync-items
   "Check for unsynced local item Pushes results to rabbit mq local->remote queue
@@ -63,7 +66,12 @@
 
 #_(gr/get-records :items :where [:= :t.active true])
 
-#_(li/get-ready-to-sync-item-ids :limit 1)
+#_(li/get-ready-to-sync-item-ids :limit 10)
 ;; => (398)
 
 #_(ri/upsert-items! (gr/get-record-by-ids :items [398]))
+#_(queue-ready-to-sync-items)
+  ;; => [{:SalesDetails {:UnitPrice 0.0, :AccountCode "400", :TaxType "OUTPUT"}, :ItemID "65f134e0-9bdf-4e29-bbec-afdba143db55", :UpdatedDateUTC "/Date(1639704445249)/", :IsSold true, :IsTrackedAsInventory false, :IsPurchased true, :Code "MLVK-RIS-002", :Name "Sun-dried Tomato + Olive Quinoa Risotto", :Description "Creamy Cashew Risotto w/Sun-dried Tomatoes + Kalamata Olives", :ValidationErrors [], :PurchaseDescription "Creamy Cashew Risotto w/Sun-dried Tomatoes + Kalamata Olives", :StatusAttributeString "OK", :PurchaseDetails {:UnitPrice 0.0, :AccountCode "500", :TaxType "NONE"}}]
+
+  ;; => Execution error (ExceptionInfo) at slingshot.support/stack-trace (support.clj:201).
+  ;;    clj-http: status 401

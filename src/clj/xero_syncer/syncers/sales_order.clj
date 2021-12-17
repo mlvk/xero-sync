@@ -18,7 +18,10 @@
   (let [sales-orders (gr/get-record-by-ids :orders (:ids data))
         results (ri/upsert-invoices! sales-orders)]
 
-    (gs/merge-back-remote->local! results lso/remote->local!)))
+    (gs/merge-back-remote->local!
+     :table :orders
+     :results results
+     :update-fn lso/remote->local!)))
 
 (defn queue-fulfilled-ready-to-sync-sales-orders
   "Check for unsynced local sales order Pushes results to rabbit mq local->remote queue

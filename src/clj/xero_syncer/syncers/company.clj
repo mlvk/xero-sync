@@ -18,7 +18,10 @@
   (let [companies (gr/get-record-by-ids :companies (:ids data))
         results (rc/upsert-contacts! companies)]
 
-    (gs/merge-back-remote->local! results lc/remote->local!)))
+    (gs/merge-back-remote->local!
+     :table :companies
+     :results results
+     :update-fn lc/remote->local!)))
 
 (defn queue-ready-to-sync-companies
   "Check for unsynced local companies Pushes results to rabbit mq local->remote queue
